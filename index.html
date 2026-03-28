@@ -783,30 +783,39 @@ body {
     <div class="card">
       <div class="card-title">🍽️ הוספת ארוחה</div>
       <div class="form-group">
-        <label class="form-label">שם הארוחה / מזון</label>
-        <input type="text" class="form-input" id="mealName" placeholder="למשל: חזה עוף + אורז" />
+        <label class="form-label">מה אכלת? תאר בחופשיות</label>
+        <textarea class="form-input" id="mealDescription" placeholder="למשל: אכלתי חזה עוף 200 גרם עם כוס אורז לבן מבושל וסלט ירקות" rows="3" style="resize:none;line-height:1.5;"></textarea>
       </div>
-      <div class="form-row">
+      <button class="btn btn-primary" id="calcNutritionBtn" onclick="calcNutrition()">✨ חשב ערכים תזונתיים</button>
+
+      <div id="mealCalcResult" style="display:none; margin-top:16px; border-top:1px solid var(--border); padding-top:14px;">
+        <div class="card-title" style="margin-bottom:12px;">✅ ערכים מחושבים — בדוק ואשר</div>
         <div class="form-group">
-          <label class="form-label">קלוריות</label>
-          <input type="number" class="form-input" id="mealCal" placeholder="350" />
+          <label class="form-label">שם הארוחה</label>
+          <input type="text" class="form-input" id="mealName" placeholder="שם הארוחה" />
         </div>
-        <div class="form-group">
-          <label class="form-label">חלבון (גרם)</label>
-          <input type="number" class="form-input" id="mealProt" placeholder="40" />
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">קלוריות</label>
+            <input type="number" class="form-input" id="mealCal" placeholder="350" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">חלבון (גרם)</label>
+            <input type="number" class="form-input" id="mealProt" placeholder="40" />
+          </div>
         </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">פחמימות (גרם)</label>
+            <input type="number" class="form-input" id="mealCarb" placeholder="30" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">שומן (גרם)</label>
+            <input type="number" class="form-input" id="mealFat" placeholder="8" />
+          </div>
+        </div>
+        <button class="btn btn-success" onclick="saveMeal()">➕ הוסף ארוחה</button>
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">פחמימות (גרם)</label>
-          <input type="number" class="form-input" id="mealCarb" placeholder="30" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">שומן (גרם)</label>
-          <input type="number" class="form-input" id="mealFat" placeholder="8" />
-        </div>
-      </div>
-      <button class="btn btn-primary" onclick="saveMeal()">➕ הוסף ארוחה</button>
     </div>
 
     <div class="card">
@@ -1260,6 +1269,56 @@ function renderMeasureCharts() {
 }
 
 // ===== NUTRITION =====
+async function calcNutrition() {
+  const description = document.getElementById('mealDescription').value.trim();
+  if (!description) { showToast('תאר מה אכלת', 'error'); return; }
+
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    showToast('הגדר מפתח API בהגדרות תחילה ⚙️', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('calcNutritionBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ מחשב...';
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 200,
+        messages: [{ role: 'user', content: `המשתמש אכל: ${description}. חשב קלוריות, חלבון, פחמימות ושומן. החזר JSON בלבד בפורמט: {"cal": number, "prot": number, "carb": number, "fat": number, "name": "string"}` }]
+      })
+    });
+    const data = await response.json();
+    if (data.content && data.content[0]) {
+      const match = data.content[0].text.match(/\{[\s\S]*\}/);
+      if (match) {
+        const n = JSON.parse(match[0]);
+        document.getElementById('mealName').value = n.name || description;
+        document.getElementById('mealCal').value = n.cal || '';
+        document.getElementById('mealProt').value = n.prot || '';
+        document.getElementById('mealCarb').value = n.carb || '';
+        document.getElementById('mealFat').value = n.fat || '';
+        document.getElementById('mealCalcResult').style.display = 'block';
+        showToast('✅ ערכים חושבו!', 'success');
+      } else {
+        showToast('שגיאה בניתוח תשובת ה-AI', 'error');
+      }
+    } else {
+      showToast('שגיאה: ' + (data.error?.message || 'בדוק את מפתח ה-API'), 'error');
+    }
+  } catch (e) {
+    showToast('שגיאת רשת', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '✨ חשב ערכים תזונתיים';
+  }
+}
+
 function setNutritionDate() {
   const el = document.getElementById('nutritionDate');
   if (!el.value) el.value = todayStr();
@@ -1313,11 +1372,13 @@ function saveMeal() {
   meals.push({ name, cal, prot, carb, fat });
   setData('meals-' + date, meals);
 
+  document.getElementById('mealDescription').value = '';
   document.getElementById('mealName').value = '';
   document.getElementById('mealCal').value = '';
   document.getElementById('mealProt').value = '';
   document.getElementById('mealCarb').value = '';
   document.getElementById('mealFat').value = '';
+  document.getElementById('mealCalcResult').style.display = 'none';
   showToast('✅ ארוחה נוספה!', 'success');
   loadNutritionForDate();
 }
