@@ -584,7 +584,7 @@ body {
     </div>
 
     <div class="goal-progress">
-      <h3>🎯 מטרה: 89 ק"ג עד 31/5/2025</h3>
+      <h3>🎯 מטרה: 89 ק"ג עד 31/5/2026</h3>
       <div class="goal-numbers">
         <div class="goal-num">
           <div class="goal-num-val" id="goalStart">97</div>
@@ -782,6 +782,10 @@ body {
 
     <div class="card">
       <div class="card-title">🍽️ הוספת ארוחה</div>
+      <div class="form-group">
+        <label class="form-label">שעת הארוחה</label>
+        <input type="time" class="form-input" id="mealTime" style="max-width:140px;" />
+      </div>
       <div class="form-group">
         <label class="form-label">מה אכלת? תאר בחופשיות</label>
         <textarea class="form-input" id="mealDescription" placeholder="למשל: אכלתי חזה עוף 200 גרם עם כוס אורז לבן מבושל וסלט ירקות" rows="3" style="resize:none;line-height:1.5;"></textarea>
@@ -1084,7 +1088,7 @@ function updateDashboard() {
   }
 
   // Days left
-  const targetDate = new Date('2025-05-31');
+  const targetDate = new Date('2026-05-31');
   const now = new Date();
   const daysLeft = Math.ceil((targetDate - now) / 86400000);
   document.getElementById('goalDaysLeft').textContent = daysLeft > 0 ? `נשארו ${daysLeft} ימים` : 'המועד הגיע!';
@@ -1322,6 +1326,11 @@ async function calcNutrition() {
 function setNutritionDate() {
   const el = document.getElementById('nutritionDate');
   if (!el.value) el.value = todayStr();
+  const timeEl = document.getElementById('mealTime');
+  if (!timeEl.value) {
+    const now = new Date();
+    timeEl.value = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+  }
 }
 
 function loadNutritionForDate() {
@@ -1348,7 +1357,7 @@ function loadNutritionForDate() {
   el.innerHTML = meals.map((m, i) => `
     <div class="meal-card">
       <div class="meal-info">
-        <div class="meal-name">${m.name}</div>
+        <div class="meal-name">${m.name}${m.time ? `<span style="font-size:11px;color:var(--text-muted);font-weight:400;margin-right:6px;">🕐 ${m.time}</span>` : ''}</div>
         <div class="meal-macros">חלבון: ${m.prot || 0}ג' | פחמימות: ${m.carb || 0}ג' | שומן: ${m.fat || 0}ג'</div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
@@ -1365,14 +1374,16 @@ function saveMeal() {
   const prot = parseInt(document.getElementById('mealProt').value) || 0;
   const carb = parseInt(document.getElementById('mealCarb').value) || 0;
   const fat = parseInt(document.getElementById('mealFat').value) || 0;
+  const time = document.getElementById('mealTime').value || '';
   if (!name || !cal) { showToast('הכנס שם וקלוריות', 'error'); return; }
 
   const date = document.getElementById('nutritionDate').value || todayStr();
   const meals = getData('meals-' + date, []);
-  meals.push({ name, cal, prot, carb, fat });
+  meals.push({ name, cal, prot, carb, fat, time });
   setData('meals-' + date, meals);
 
   document.getElementById('mealDescription').value = '';
+  document.getElementById('mealTime').value = '';
   document.getElementById('mealName').value = '';
   document.getElementById('mealCal').value = '';
   document.getElementById('mealProt').value = '';
