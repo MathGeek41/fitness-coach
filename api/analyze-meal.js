@@ -112,7 +112,7 @@ function mergeSources(geminiFood, usda) {
 }
 
 // ── Main handler (Vercel format) ─────────────────────────────
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Content-Type', 'application/json');
 
