@@ -123,13 +123,26 @@ module.exports = async function handler(req, res) {
     const { text } = req.body || {};
     if (!text?.trim()) return res.status(400).json({ error: 'text is required' });
 
-    // Step 1 — Gemini
-    const gemini = await analyzeWithGemini(text.trim());
+    // ── MOCK RESPONSE (Gemini API temporarily disabled) ──────
+    // TODO: remove mock and restore Gemini logic once API is confirmed working
+    return res.status(200).json({
+      name:           text.slice(0, 40),
+      cal:            450,
+      prot:           30,
+      carb:           40,
+      fat:            15,
+      health_score:   7,
+      health_reason:  'This is a simulated response while the AI API is syncing.',
+      confidence_pct: 70,
+      usda_verified:  'N/A',
+      foods:          []
+    });
+    // ── END MOCK ─────────────────────────────────────────────
 
-    // Step 2 — USDA (parallel, only if key exists)
+    /* RESTORE WHEN GEMINI IS READY:
+    const gemini = await analyzeWithGemini(text.trim());
     let foods = gemini.foods;
     let usdaHits = 0;
-
     if (USDA_KEY) {
       const usdaResults = await Promise.all(
         gemini.foods.map(f => verifyWithUSDA(f.name_english, f.quantity_grams))
@@ -142,12 +155,10 @@ module.exports = async function handler(req, res) {
     } else {
       foods = gemini.foods.map(f => ({ ...f, source: 'Gemini' }));
     }
-
     const sum = (key) => Math.round(foods.reduce((s, f) => s + (f[key] || 0), 0) * 10) / 10;
     const confidencePct = !USDA_KEY || usdaHits === 0 ? 70
       : usdaHits === foods.length ? 95
       : Math.round(70 + (usdaHits / foods.length) * 25);
-
     return res.status(200).json({
       name:           gemini.meal_name || text.slice(0, 40),
       cal:            Math.round(sum('calories')),
@@ -159,7 +170,7 @@ module.exports = async function handler(req, res) {
       confidence_pct: confidencePct,
       usda_verified:  USDA_KEY ? usdaHits + '/' + foods.length : 'N/A',
       foods
-    });
+    }); */
   } catch (e) {
     console.error('analyze-meal error:', e);
     return res.status(500).json({ error: e.message || 'Internal server error' });
