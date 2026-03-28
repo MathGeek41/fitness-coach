@@ -1,0 +1,1653 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0369a1">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<title>מאמן אישי</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary: #0369a1;
+  --primary-light: #0ea5e9;
+  --primary-dark: #075985;
+  --accent: #06b6d4;
+  --accent-light: #67e8f9;
+  --bg: #f0f9ff;
+  --bg-card: #ffffff;
+  --text: #0c4a6e;
+  --text-light: #64748b;
+  --text-muted: #94a3b8;
+  --border: #bae6fd;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --nav-height: 68px;
+  --header-height: 60px;
+  --radius: 16px;
+  --shadow: 0 4px 20px rgba(3,105,161,0.12);
+  --shadow-sm: 0 2px 8px rgba(3,105,161,0.08);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: 'Heebo', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  direction: rtl;
+}
+
+/* HEADER */
+.header {
+  position: fixed;
+  top: 0; right: 0; left: 0;
+  height: var(--header-height);
+  background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  z-index: 100;
+  box-shadow: 0 2px 12px rgba(3,105,161,0.3);
+}
+
+.header-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.3px;
+}
+
+.header-subtitle {
+  font-size: 12px;
+  color: var(--accent-light);
+  font-weight: 400;
+}
+
+.header-avatar {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--primary-light));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  cursor: pointer;
+  border: 2px solid rgba(255,255,255,0.3);
+}
+
+/* MAIN */
+.main {
+  padding-top: var(--header-height);
+  padding-bottom: calc(var(--nav-height) + 8px);
+  min-height: 100vh;
+}
+
+/* VIEWS */
+.view { display: none; padding: 16px; animation: fadeIn 0.25s ease; }
+.view.active { display: block; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+
+/* BOTTOM NAV */
+.bottom-nav {
+  position: fixed;
+  bottom: 0; right: 0; left: 0;
+  height: var(--nav-height);
+  background: #fff;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  z-index: 100;
+  box-shadow: 0 -4px 20px rgba(3,105,161,0.1);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+  padding: 8px 10px;
+  border-radius: 12px;
+  transition: all 0.2s;
+  min-width: 52px;
+  border: none;
+  background: none;
+}
+
+.nav-item .nav-icon { font-size: 22px; transition: transform 0.2s; }
+.nav-item .nav-label { font-size: 10px; font-weight: 500; color: var(--text-muted); font-family: 'Heebo', sans-serif; }
+.nav-item.active .nav-label { color: var(--primary); font-weight: 700; }
+.nav-item.active .nav-icon { transform: scale(1.15); }
+.nav-item.active { background: var(--bg); }
+
+/* CARDS */
+.card {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+}
+
+.card-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* DASHBOARD */
+.welcome-banner {
+  background: linear-gradient(135deg, var(--primary-dark), var(--accent));
+  border-radius: var(--radius);
+  padding: 20px;
+  color: #fff;
+  margin-bottom: 14px;
+  position: relative;
+  overflow: hidden;
+}
+
+.welcome-banner::after {
+  content: '💪';
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 48px;
+  opacity: 0.2;
+}
+
+.welcome-banner h2 { font-size: 20px; font-weight: 800; margin-bottom: 4px; }
+.welcome-banner p { font-size: 13px; opacity: 0.85; }
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.stat-card {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 14px;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.stat-card:active { transform: scale(0.97); }
+
+.stat-value { font-size: 26px; font-weight: 800; color: var(--primary); }
+.stat-unit { font-size: 12px; font-weight: 500; color: var(--text-light); }
+.stat-label { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+.progress-bar-wrap { margin-bottom: 6px; }
+.progress-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; }
+.progress-bar { height: 10px; background: var(--bg); border-radius: 99px; overflow: hidden; border: 1px solid var(--border); }
+.progress-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--primary-light), var(--accent)); transition: width 0.5s ease; }
+.progress-fill.protein { background: linear-gradient(90deg, #10b981, #34d399); }
+.progress-fill.goal { background: linear-gradient(90deg, var(--warning), #fcd34d); }
+
+/* FORMS */
+.form-group { margin-bottom: 12px; }
+.form-label { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px; display: block; }
+.form-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  font-size: 15px;
+  font-family: 'Heebo', sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  outline: none;
+  transition: border-color 0.2s;
+  direction: rtl;
+}
+.form-input:focus { border-color: var(--primary-light); background: #fff; }
+
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+
+.btn {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: 'Heebo', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: -0.2px;
+}
+.btn:active { transform: scale(0.98); }
+.btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: #fff; box-shadow: 0 4px 12px rgba(3,105,161,0.3); }
+.btn-success { background: linear-gradient(135deg, var(--success), #34d399); color: #fff; }
+.btn-outline { background: transparent; border: 1.5px solid var(--primary); color: var(--primary); }
+.btn-sm { padding: 8px 14px; font-size: 13px; width: auto; border-radius: 8px; }
+
+/* TABS */
+.tabs {
+  display: flex;
+  background: var(--bg);
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 14px;
+  border: 1px solid var(--border);
+}
+.tab {
+  flex: 1;
+  text-align: center;
+  padding: 9px 6px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: 'Heebo', sans-serif;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: 9px;
+  transition: all 0.2s;
+  border: none;
+  background: none;
+}
+.tab.active {
+  background: #fff;
+  color: var(--primary);
+  box-shadow: var(--shadow-sm);
+}
+
+/* WORKOUT MUSCLES */
+.muscle-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.muscle-btn {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Heebo', sans-serif;
+}
+.muscle-btn:active { transform: scale(0.97); }
+.muscle-btn.active { border-color: var(--primary); background: #e0f2fe; }
+.muscle-btn .muscle-icon { font-size: 24px; margin-bottom: 4px; }
+.muscle-btn .muscle-name { font-size: 12px; font-weight: 700; color: var(--text); }
+
+/* EXERCISE LOG */
+.exercise-item {
+  background: var(--bg);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 10px;
+  border: 1px solid var(--border);
+}
+.exercise-name { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+.set-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.set-badge { background: var(--primary); color: #fff; border-radius: 6px; padding: 2px 7px; font-size: 11px; font-weight: 700; min-width: 30px; text-align: center; }
+.set-input { flex: 1; padding: 7px 10px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; font-family: 'Heebo', sans-serif; text-align: center; background: #fff; outline: none; }
+.set-input:focus { border-color: var(--primary-light); }
+.add-set-btn { background: none; border: 1.5px dashed var(--border); border-radius: 8px; padding: 6px; font-size: 18px; cursor: pointer; color: var(--text-muted); width: 100%; margin-top: 4px; transition: all 0.2s; }
+.add-set-btn:hover { border-color: var(--primary); color: var(--primary); }
+
+/* HISTORY LIST */
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.history-item:last-child { border-bottom: none; }
+.history-date { color: var(--text-muted); font-size: 11px; }
+.history-value { font-weight: 700; color: var(--primary); }
+.history-del { background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 16px; padding: 4px; }
+
+/* CHART */
+.chart-wrap { position: relative; height: 200px; }
+
+/* NUTRITION */
+.meal-card {
+  background: var(--bg);
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  border: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.meal-info { flex: 1; }
+.meal-name { font-size: 13px; font-weight: 600; color: var(--text); }
+.meal-macros { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.meal-calories { font-size: 16px; font-weight: 800; color: var(--primary); }
+
+.macro-circles {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin: 12px 0;
+}
+.macro-circle {
+  text-align: center;
+}
+.circle-val { font-size: 22px; font-weight: 800; color: var(--primary); }
+.circle-unit { font-size: 10px; color: var(--text-muted); }
+.circle-label { font-size: 11px; font-weight: 600; color: var(--text-light); }
+
+/* CHAT */
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - var(--header-height) - var(--nav-height) - 32px);
+}
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+  scroll-behavior: smooth;
+}
+.chat-msg {
+  max-width: 82%;
+  margin-bottom: 10px;
+  animation: fadeIn 0.2s ease;
+}
+.chat-msg.user { margin-right: auto; margin-left: 0; }
+.chat-msg.assistant { margin-left: auto; margin-right: 0; }
+.chat-bubble {
+  padding: 10px 14px;
+  border-radius: 16px;
+  font-size: 14px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+.chat-msg.user .chat-bubble {
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+.chat-msg.assistant .chat-bubble {
+  background: #fff;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-bottom-left-radius: 4px;
+  box-shadow: var(--shadow-sm);
+}
+.chat-time { font-size: 10px; color: var(--text-muted); margin-top: 4px; text-align: center; }
+.chat-input-row {
+  display: flex;
+  gap: 8px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
+}
+.chat-input {
+  flex: 1;
+  padding: 12px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 24px;
+  font-size: 14px;
+  font-family: 'Heebo', sans-serif;
+  outline: none;
+  background: var(--bg);
+  transition: border-color 0.2s;
+  direction: rtl;
+}
+.chat-input:focus { border-color: var(--primary-light); background: #fff; }
+.chat-send {
+  width: 46px; height: 46px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  border: none;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  box-shadow: 0 3px 10px rgba(3,105,161,0.3);
+  transition: all 0.2s;
+}
+.chat-send:active { transform: scale(0.95); }
+.typing-indicator { display: flex; gap: 4px; padding: 10px 14px; }
+.typing-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--primary-light);
+  animation: bounce 1.2s infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes bounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-6px)} }
+
+/* SETTINGS */
+.settings-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+.settings-item:last-child { border-bottom: none; }
+.settings-label { font-weight: 600; color: var(--text); }
+.settings-value { color: var(--text-muted); font-size: 13px; }
+
+/* GOAL BANNER */
+.goal-progress {
+  background: linear-gradient(135deg, #0c4a6e, var(--primary));
+  border-radius: var(--radius);
+  padding: 16px;
+  color: #fff;
+  margin-bottom: 14px;
+}
+.goal-progress h3 { font-size: 14px; opacity: 0.85; margin-bottom: 10px; }
+.goal-numbers { display: flex; justify-content: space-between; margin-bottom: 10px; }
+.goal-num { text-align: center; }
+.goal-num-val { font-size: 22px; font-weight: 800; }
+.goal-num-label { font-size: 10px; opacity: 0.75; }
+.goal-bar { height: 8px; background: rgba(255,255,255,0.2); border-radius: 99px; overflow: hidden; }
+.goal-bar-fill { height: 100%; background: var(--accent-light); border-radius: 99px; transition: width 0.5s; }
+
+/* BADGE */
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.badge-green { background: #d1fae5; color: #065f46; }
+.badge-red { background: #fee2e2; color: #991b1b; }
+.badge-blue { background: #e0f2fe; color: var(--primary-dark); }
+
+/* EMPTY STATE */
+.empty-state {
+  text-align: center;
+  padding: 30px 20px;
+  color: var(--text-muted);
+}
+.empty-state .empty-icon { font-size: 40px; margin-bottom: 8px; }
+.empty-state p { font-size: 13px; }
+
+/* SECTION HEADER */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.section-title { font-size: 15px; font-weight: 700; color: var(--text); }
+
+/* API KEY MODAL */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 24px;
+  width: 100%;
+  max-width: 380px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+.modal h3 { font-size: 18px; font-weight: 800; margin-bottom: 8px; color: var(--text); }
+.modal p { font-size: 13px; color: var(--text-light); margin-bottom: 16px; line-height: 1.5; }
+
+/* TOAST */
+.toast {
+  position: fixed;
+  top: calc(var(--header-height) + 10px);
+  right: 16px;
+  left: 16px;
+  background: var(--text);
+  color: #fff;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  z-index: 300;
+  transform: translateY(-80px);
+  transition: transform 0.3s ease;
+  text-align: center;
+}
+.toast.show { transform: translateY(0); }
+.toast.success { background: var(--success); }
+.toast.error { background: var(--danger); }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div>
+    <div class="header-title">💪 מאמן אישי</div>
+    <div class="header-subtitle" id="headerDate"></div>
+  </div>
+  <div class="header-avatar" onclick="showView('settings')">⚙️</div>
+</header>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- API KEY MODAL -->
+<div class="modal-overlay" id="apiModal">
+  <div class="modal">
+    <h3>🔑 מפתח API</h3>
+    <p>כדי להשתמש במאמן האישי בצ'אט, הכנס את מפתח ה-API של Anthropic שלך. ניתן לקבל אותו בכתובת console.anthropic.com</p>
+    <div class="form-group">
+      <input type="password" class="form-input" id="apiKeyInput" placeholder="sk-ant-..." />
+    </div>
+    <button class="btn btn-primary" onclick="saveApiKey()">שמור מפתח</button>
+    <br><br>
+    <button class="btn btn-outline" onclick="closeApiModal()">ביטול</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- DASHBOARD -->
+  <div class="view active" id="view-home">
+    <div class="welcome-banner">
+      <h2>שלום אייל! 🏋️</h2>
+      <p id="dashboardMotivation">בוא נעשה את זה קורה. החולצה יורדת ב-31/5!</p>
+    </div>
+
+    <div class="goal-progress">
+      <h3>🎯 מטרה: 89 ק"ג עד 31/5/2025</h3>
+      <div class="goal-numbers">
+        <div class="goal-num">
+          <div class="goal-num-val" id="goalStart">97</div>
+          <div class="goal-num-label">התחלה</div>
+        </div>
+        <div class="goal-num">
+          <div class="goal-num-val" id="goalCurrent">—</div>
+          <div class="goal-num-label">היום</div>
+        </div>
+        <div class="goal-num">
+          <div class="goal-num-val">89</div>
+          <div class="goal-num-label">מטרה</div>
+        </div>
+      </div>
+      <div class="goal-bar">
+        <div class="goal-bar-fill" id="goalBarFill" style="width:0%"></div>
+      </div>
+      <div style="font-size:11px;opacity:0.7;margin-top:6px;text-align:left;" id="goalDaysLeft"></div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card" onclick="showView('weight')">
+        <div class="stat-value" id="dashWeight">—</div>
+        <div class="stat-unit">ק"ג</div>
+        <div class="stat-label">משקל אחרון</div>
+      </div>
+      <div class="stat-card" onclick="showView('measurements')">
+        <div class="stat-value" id="dashWaist">—</div>
+        <div class="stat-unit">ס"מ</div>
+        <div class="stat-label">היקף מותן</div>
+      </div>
+      <div class="stat-card" onclick="showView('nutrition')">
+        <div class="stat-value" id="dashCalories">—</div>
+        <div class="stat-unit">קל'</div>
+        <div class="stat-label">קלוריות היום</div>
+      </div>
+      <div class="stat-card" onclick="showView('workouts')">
+        <div class="stat-value" id="dashWorkouts">—</div>
+        <div class="stat-unit">אימונים</div>
+        <div class="stat-label">השבוע</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🥗 תזונה היום</div>
+      <div class="progress-bar-wrap">
+        <div class="progress-label">
+          <span>קלוריות</span>
+          <span id="dashCalProg">0 / 1800 קל'</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" id="dashCalBar" style="width:0%"></div></div>
+      </div>
+      <div class="progress-bar-wrap" style="margin-top:10px;">
+        <div class="progress-label">
+          <span>חלבון</span>
+          <span id="dashProtProg">0 / 180 גרם</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill protein" id="dashProtBar" style="width:0%"></div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-header">
+        <div class="section-title">📅 אימון אחרון</div>
+      </div>
+      <div id="dashLastWorkout">
+        <div class="empty-state">
+          <div class="empty-icon">🏋️</div>
+          <p>אין אימונים עדיין — בוא נתחיל!</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WEIGHT -->
+  <div class="view" id="view-weight">
+    <div class="card">
+      <div class="card-title">⚖️ הוספת משקל</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">משקל (ק"ג)</label>
+          <input type="number" class="form-input" id="weightInput" placeholder="97.0" step="0.1" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">תאריך</label>
+          <input type="date" class="form-input" id="weightDate" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">הערה (אופציונלי)</label>
+        <input type="text" class="form-input" id="weightNote" placeholder="למשל: אחרי ארוחה גדולה" />
+      </div>
+      <button class="btn btn-primary" onclick="saveWeight()">💾 שמור משקל</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📈 גרף משקל</div>
+      <div class="chart-wrap">
+        <canvas id="weightChart"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-header">
+        <div class="section-title">📋 היסטוריה</div>
+      </div>
+      <div id="weightHistory"></div>
+    </div>
+  </div>
+
+  <!-- MEASUREMENTS -->
+  <div class="view" id="view-measurements">
+    <div class="card">
+      <div class="card-title">📏 הוספת מדידה</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">היקף מותן (ס"מ)</label>
+          <input type="number" class="form-input" id="waistInput" placeholder="105" step="0.5" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">% שומן (קליפר)</label>
+          <input type="number" class="form-input" id="fatInput" placeholder="30" step="0.1" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">תאריך</label>
+        <input type="date" class="form-input" id="measureDate" />
+      </div>
+      <button class="btn btn-primary" onclick="saveMeasurement()">💾 שמור מדידה</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📈 גרף היקף מותן</div>
+      <div class="chart-wrap">
+        <canvas id="waistChart"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📈 גרף אחוז שומן</div>
+      <div class="chart-wrap">
+        <canvas id="fatChart"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-header">
+        <div class="section-title">📋 היסטוריה</div>
+      </div>
+      <div id="measureHistory"></div>
+    </div>
+  </div>
+
+  <!-- NUTRITION -->
+  <div class="view" id="view-nutrition">
+    <div class="card">
+      <div class="card-title">📊 סיכום יומי</div>
+      <div class="macro-circles">
+        <div class="macro-circle">
+          <div class="circle-val" id="totalCal">0</div>
+          <div class="circle-unit">קל'</div>
+          <div class="circle-label">קלוריות</div>
+        </div>
+        <div class="macro-circle">
+          <div class="circle-val" id="totalProt">0</div>
+          <div class="circle-unit">גרם</div>
+          <div class="circle-label">חלבון</div>
+        </div>
+        <div class="macro-circle">
+          <div class="circle-val" id="totalCarb">0</div>
+          <div class="circle-unit">גרם</div>
+          <div class="circle-label">פחמימות</div>
+        </div>
+        <div class="macro-circle">
+          <div class="circle-val" id="totalFat">0</div>
+          <div class="circle-unit">גרם</div>
+          <div class="circle-label">שומן</div>
+        </div>
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="progress-label">
+          <span>קלוריות</span>
+          <span id="calProg">0 / 1800</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" id="calBar" style="width:0%"></div></div>
+      </div>
+      <div class="progress-bar-wrap" style="margin-top:8px;">
+        <div class="progress-label">
+          <span>חלבון</span>
+          <span id="protProg">0 / 180 גרם</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill protein" id="protBar" style="width:0%"></div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🍽️ הוספת ארוחה</div>
+      <div class="form-group">
+        <label class="form-label">שם הארוחה / מזון</label>
+        <input type="text" class="form-input" id="mealName" placeholder="למשל: חזה עוף + אורז" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">קלוריות</label>
+          <input type="number" class="form-input" id="mealCal" placeholder="350" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">חלבון (גרם)</label>
+          <input type="number" class="form-input" id="mealProt" placeholder="40" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">פחמימות (גרם)</label>
+          <input type="number" class="form-input" id="mealCarb" placeholder="30" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">שומן (גרם)</label>
+          <input type="number" class="form-input" id="mealFat" placeholder="8" />
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="saveMeal()">➕ הוסף ארוחה</button>
+    </div>
+
+    <div class="card">
+      <div class="section-header">
+        <div class="section-title">🍽️ ארוחות היום</div>
+        <input type="date" id="nutritionDate" class="form-input" style="width:auto;padding:6px 10px;font-size:12px;" onchange="loadNutritionForDate()" />
+      </div>
+      <div id="mealsList"></div>
+    </div>
+  </div>
+
+  <!-- WORKOUTS -->
+  <div class="view" id="view-workouts">
+    <div class="tabs">
+      <button class="tab active" onclick="switchWorkoutTab('log', this)">הוספת אימון</button>
+      <button class="tab" onclick="switchWorkoutTab('history', this)">היסטוריה</button>
+      <button class="tab" onclick="switchWorkoutTab('progress', this)">התקדמות</button>
+    </div>
+
+    <!-- LOG TAB -->
+    <div id="workout-log">
+      <div class="card">
+        <div class="card-title">📅 פרטי אימון</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">תאריך</label>
+            <input type="date" class="form-input" id="workoutDate" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">קבוצת שרירים</label>
+            <select class="form-input" id="muscleSelect" onchange="loadExercises()">
+              <option value="">בחר שריר</option>
+              <option value="חזה">חזה</option>
+              <option value="גב">גב</option>
+              <option value="כתפיים">כתפיים</option>
+              <option value="יד קדמית">יד קדמית</option>
+              <option value="יד אחורית">יד אחורית</option>
+              <option value="רגליים וישבן">רגליים וישבן</option>
+              <option value="בטן">בטן</option>
+              <option value="תרגילי על">תרגילי על</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div id="exercisesList"></div>
+
+      <div id="saveWorkoutBtn" style="display:none;">
+        <button class="btn btn-success" onclick="saveWorkout()">💪 שמור אימון</button>
+      </div>
+    </div>
+
+    <!-- HISTORY TAB -->
+    <div id="workout-history" style="display:none;">
+      <div id="workoutHistoryList"></div>
+    </div>
+
+    <!-- PROGRESS TAB -->
+    <div id="workout-progress" style="display:none;">
+      <div class="card">
+        <div class="form-group">
+          <label class="form-label">בחר תרגיל לגרף התקדמות</label>
+          <select class="form-input" id="progressExerciseSelect" onchange="showExerciseProgress()">
+            <option value="">בחר תרגיל</option>
+          </select>
+        </div>
+      </div>
+      <div class="card" id="progressChartCard" style="display:none;">
+        <div class="card-title" id="progressChartTitle">📈 התקדמות</div>
+        <div class="chart-wrap">
+          <canvas id="progressChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHAT -->
+  <div class="view" id="view-chat">
+    <div class="chat-container">
+      <div class="chat-messages" id="chatMessages">
+        <div class="chat-msg assistant">
+          <div class="chat-bubble">שלום אייל! 💪 אני המאמן האישי שלך. אני יודע שהמטרה שלך היא להגיע ל-89 ק"ג עד ה-31/5 עם אחוז שומן נמוך — החולצה יורדת בים! 😄
+
+אני כאן לעזור לך עם:
+• תכנון אימונים
+• ייעוץ תזונתי
+• מוטיבציה וסיכומים
+• ניתוח ההתקדמות שלך
+
+כיצד אוכל לעזור לך היום?</div>
+          <div class="chat-time">המאמן שלך</div>
+        </div>
+      </div>
+      <div class="chat-input-row">
+        <input class="chat-input" id="chatInput" placeholder="שאל את המאמן..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){sendMessage();event.preventDefault();}" />
+        <button class="chat-send" onclick="sendMessage()">📤</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="view" id="view-settings">
+    <div class="card">
+      <div class="card-title">👤 פרופיל</div>
+      <div class="settings-item">
+        <span class="settings-label">שם</span>
+        <span class="settings-value">אייל</span>
+      </div>
+      <div class="settings-item">
+        <span class="settings-label">גיל</span>
+        <span class="settings-value">42</span>
+      </div>
+      <div class="settings-item">
+        <span class="settings-label">משקל התחלתי</span>
+        <span class="settings-value">97 ק"ג</span>
+      </div>
+      <div class="settings-item">
+        <span class="settings-label">אחוז שומן התחלתי</span>
+        <span class="settings-value">30%</span>
+      </div>
+      <div class="settings-item">
+        <span class="settings-label">משקל מטרה</span>
+        <span class="settings-value">89 ק"ג עד 31/5</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🎯 יעדים יומיים</div>
+      <div class="form-group">
+        <label class="form-label">יעד קלוריות</label>
+        <input type="number" class="form-input" id="settingCalTarget" placeholder="1800" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">יעד חלבון (גרם)</label>
+        <input type="number" class="form-input" id="settingProtTarget" placeholder="180" />
+      </div>
+      <button class="btn btn-primary" onclick="saveSettings()">💾 שמור הגדרות</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🔑 מפתח API לצ'אט</div>
+      <div class="settings-item">
+        <span class="settings-label">מצב</span>
+        <span class="settings-value" id="apiKeyStatus">לא מוגדר</span>
+      </div>
+      <button class="btn btn-outline" onclick="openApiModal()" style="margin-top:8px;">הגדר מפתח API</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🗑️ ניהול נתונים</div>
+      <button class="btn btn-outline" onclick="exportData()" style="margin-bottom:10px;">📤 ייצוא נתונים (JSON)</button>
+      <button class="btn" style="background:#fee2e2;color:#991b1b;border:none;" onclick="clearAllData()">🗑️ מחק כל הנתונים</button>
+    </div>
+  </div>
+
+</main>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="nav-item active" onclick="showView('home')" id="nav-home">
+    <span class="nav-icon">🏠</span>
+    <span class="nav-label">בית</span>
+  </button>
+  <button class="nav-item" onclick="showView('weight')" id="nav-weight">
+    <span class="nav-icon">⚖️</span>
+    <span class="nav-label">משקל</span>
+  </button>
+  <button class="nav-item" onclick="showView('nutrition')" id="nav-nutrition">
+    <span class="nav-icon">🥗</span>
+    <span class="nav-label">תזונה</span>
+  </button>
+  <button class="nav-item" onclick="showView('workouts')" id="nav-workouts">
+    <span class="nav-icon">💪</span>
+    <span class="nav-label">אימונים</span>
+  </button>
+  <button class="nav-item" onclick="showView('chat')" id="nav-chat">
+    <span class="nav-icon">💬</span>
+    <span class="nav-label">מאמן</span>
+  </button>
+</nav>
+
+<script>
+// ===== DATA =====
+const EXERCISES = {
+  'חזה': ['לחיצת חזה בספסל', 'לחיצת חזה בשיפוע', 'פרפר במכונה'],
+  'גב': ['משיכת פולי עליון', 'חתירה בישיבה', 'חתירה במכונה'],
+  'כתפיים': ['לחיצת כתפיים במכונה', 'משיכת צד בכבל', 'פרפר הפוך במכונה'],
+  'יד קדמית': ['ספסל כומר', 'יד קדמית עם כבל', 'יד קדמית עם מוט'],
+  'יד אחורית': ['יד אחורית עם כבל', 'לחיצה במכונה', 'מקבילים'],
+  'רגליים וישבן': ['דדליפט', 'סקווט', 'היפ טראסט'],
+  'בטן': ['מכונת בטן', 'הרמת רגליים בעמידה'],
+  'תרגילי על': ['מתח', 'מקבילים']
+};
+
+let weightChart = null, waistChart = null, fatChart = null, progressChart = null;
+
+function getData(key, def = []) {
+  try { return JSON.parse(localStorage.getItem(key)) || def; } catch { return def; }
+}
+function setData(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+
+function getSettings() {
+  return getData('settings', { calTarget: 1800, protTarget: 180 });
+}
+
+function todayStr() { return new Date().toISOString().split('T')[0]; }
+
+function formatDate(str) {
+  if (!str) return '';
+  const d = new Date(str + 'T12:00:00');
+  return d.toLocaleDateString('he-IL', { day: 'numeric', month: 'short' });
+}
+
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast', 2500);
+}
+
+// ===== NAVIGATION =====
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const view = document.getElementById('view-' + name);
+  if (view) { view.classList.add('active'); }
+  const nav = document.getElementById('nav-' + name);
+  if (nav) nav.classList.add('active');
+
+  if (name === 'home') updateDashboard();
+  if (name === 'weight') { setTodayDate('weightDate'); renderWeightHistory(); renderWeightChart(); }
+  if (name === 'measurements') { setTodayDate('measureDate'); renderMeasureHistory(); renderMeasureCharts(); }
+  if (name === 'nutrition') { setNutritionDate(); loadNutritionForDate(); }
+  if (name === 'workouts') { setTodayDate('workoutDate'); renderWorkoutHistory(); populateProgressSelect(); }
+  if (name === 'settings') { loadSettings(); }
+}
+
+function setTodayDate(id) {
+  const el = document.getElementById(id);
+  if (el && !el.value) el.value = todayStr();
+}
+
+// ===== DASHBOARD =====
+function updateDashboard() {
+  const weights = getData('weights');
+  const measures = getData('measurements');
+  const settings = getSettings();
+  const today = todayStr();
+
+  // Weight
+  if (weights.length) {
+    const last = weights[weights.length - 1];
+    document.getElementById('dashWeight').textContent = last.weight;
+    document.getElementById('goalCurrent').textContent = last.weight;
+
+    // Goal progress
+    const start = 97, goal = 89;
+    const pct = Math.min(100, Math.max(0, ((start - last.weight) / (start - goal)) * 100));
+    document.getElementById('goalBarFill').style.width = pct + '%';
+  }
+
+  // Waist
+  if (measures.length) {
+    const last = measures[measures.length - 1];
+    if (last.waist) document.getElementById('dashWaist').textContent = last.waist;
+  }
+
+  // Days left
+  const targetDate = new Date('2025-05-31');
+  const now = new Date();
+  const daysLeft = Math.ceil((targetDate - now) / 86400000);
+  document.getElementById('goalDaysLeft').textContent = daysLeft > 0 ? `נשארו ${daysLeft} ימים` : 'המועד הגיע!';
+
+  // Nutrition today
+  const meals = getData('meals-' + today, []);
+  const totalCal = meals.reduce((s, m) => s + (m.cal || 0), 0);
+  const totalProt = meals.reduce((s, m) => s + (m.prot || 0), 0);
+  document.getElementById('dashCalories').textContent = totalCal;
+  document.getElementById('dashCalProg').textContent = `${totalCal} / ${settings.calTarget} קל'`;
+  document.getElementById('dashProtProg').textContent = `${totalProt} / ${settings.protTarget} גרם`;
+  document.getElementById('dashCalBar').style.width = Math.min(100, (totalCal / settings.calTarget) * 100) + '%';
+  document.getElementById('dashProtBar').style.width = Math.min(100, (totalProt / settings.protTarget) * 100) + '%';
+
+  // Workouts this week
+  const allWorkouts = getData('workouts');
+  const weekStart = new Date();
+  weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+  const weekWorkouts = allWorkouts.filter(w => new Date(w.date) >= weekStart);
+  document.getElementById('dashWorkouts').textContent = weekWorkouts.length;
+
+  // Last workout
+  if (allWorkouts.length) {
+    const last = allWorkouts[allWorkouts.length - 1];
+    document.getElementById('dashLastWorkout').innerHTML = `
+      <div class="history-item">
+        <span>${last.muscle}</span>
+        <span class="history-value">${formatDate(last.date)}</span>
+      </div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">${last.exercises.map(e => e.name).join(' | ')}</div>
+    `;
+  }
+}
+
+// ===== WEIGHT =====
+function saveWeight() {
+  const weight = parseFloat(document.getElementById('weightInput').value);
+  const date = document.getElementById('weightDate').value || todayStr();
+  const note = document.getElementById('weightNote').value;
+  if (!weight || weight < 30 || weight > 300) { showToast('הכנס משקל תקין', 'error'); return; }
+
+  const weights = getData('weights');
+  weights.push({ weight, date, note });
+  weights.sort((a, b) => a.date.localeCompare(b.date));
+  setData('weights', weights);
+
+  document.getElementById('weightInput').value = '';
+  document.getElementById('weightNote').value = '';
+  showToast('✅ משקל נשמר!', 'success');
+  renderWeightHistory();
+  renderWeightChart();
+}
+
+function renderWeightHistory() {
+  const weights = getData('weights').slice().reverse();
+  const el = document.getElementById('weightHistory');
+  if (!weights.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">⚖️</div><p>אין נתוני משקל עדיין</p></div>'; return; }
+  el.innerHTML = weights.slice(0, 15).map((w, i) => {
+    const prev = weights[i + 1];
+    const diff = prev ? (w.weight - prev.weight).toFixed(1) : null;
+    const badge = diff !== null ? `<span class="badge ${diff < 0 ? 'badge-green' : diff > 0 ? 'badge-red' : 'badge-blue'}">${diff > 0 ? '+' : ''}${diff}</span>` : '';
+    return `<div class="history-item">
+      <div><span class="history-value">${w.weight} ק"ג</span> ${badge}<div class="history-date">${w.note || ''}</div></div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="history-date">${formatDate(w.date)}</span>
+        <button class="history-del" onclick="deleteWeight(${weights.length - 1 - i})">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function deleteWeight(idx) {
+  const weights = getData('weights');
+  weights.splice(idx, 1);
+  setData('weights', weights);
+  renderWeightHistory();
+  renderWeightChart();
+  showToast('נמחק', '');
+}
+
+function renderWeightChart() {
+  const weights = getData('weights').slice(-30);
+  const ctx = document.getElementById('weightChart').getContext('2d');
+  if (weightChart) weightChart.destroy();
+  if (!weights.length) return;
+  weightChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: weights.map(w => formatDate(w.date)),
+      datasets: [{
+        label: 'משקל (ק"ג)',
+        data: weights.map(w => w.weight),
+        borderColor: '#0369a1',
+        backgroundColor: 'rgba(3,105,161,0.08)',
+        borderWidth: 2.5,
+        pointBackgroundColor: '#0ea5e9',
+        pointRadius: 4,
+        tension: 0.3,
+        fill: true
+      }, {
+        label: 'מטרה',
+        data: weights.map(() => 89),
+        borderColor: '#10b981',
+        borderWidth: 1.5,
+        borderDash: [5, 5],
+        pointRadius: 0,
+        fill: false
+      }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { family: 'Heebo', size: 11 } } } }, scales: { y: { grid: { color: '#e0f2fe' }, ticks: { font: { family: 'Heebo' } } }, x: { grid: { display: false }, ticks: { font: { family: 'Heebo', size: 10 }, maxTicksLimit: 8 } } } }
+  });
+}
+
+// ===== MEASUREMENTS =====
+function saveMeasurement() {
+  const waist = parseFloat(document.getElementById('waistInput').value);
+  const fat = parseFloat(document.getElementById('fatInput').value);
+  const date = document.getElementById('measureDate').value || todayStr();
+  if (!waist && !fat) { showToast('הכנס לפחות מדידה אחת', 'error'); return; }
+
+  const measures = getData('measurements');
+  measures.push({ waist: waist || null, fat: fat || null, date });
+  measures.sort((a, b) => a.date.localeCompare(b.date));
+  setData('measurements', measures);
+
+  document.getElementById('waistInput').value = '';
+  document.getElementById('fatInput').value = '';
+  showToast('✅ מדידה נשמרה!', 'success');
+  renderMeasureHistory();
+  renderMeasureCharts();
+}
+
+function renderMeasureHistory() {
+  const measures = getData('measurements').slice().reverse();
+  const el = document.getElementById('measureHistory');
+  if (!measures.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">📏</div><p>אין מדידות עדיין</p></div>'; return; }
+  el.innerHTML = measures.slice(0, 10).map((m, i) => `
+    <div class="history-item">
+      <div>
+        ${m.waist ? `<span class="history-value">${m.waist} ס"מ</span>` : ''}
+        ${m.fat ? `<span style="margin-right:8px;font-size:13px;color:var(--text-light);">${m.fat}% שומן</span>` : ''}
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="history-date">${formatDate(m.date)}</span>
+        <button class="history-del" onclick="deleteMeasure(${measures.length - 1 - i})">🗑️</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function deleteMeasure(idx) {
+  const measures = getData('measurements');
+  measures.splice(idx, 1);
+  setData('measurements', measures);
+  renderMeasureHistory();
+  renderMeasureCharts();
+}
+
+function renderMeasureCharts() {
+  const measures = getData('measurements').filter(m => m.waist).slice(-20);
+  const fatMeasures = getData('measurements').filter(m => m.fat).slice(-20);
+
+  const waistCtx = document.getElementById('waistChart').getContext('2d');
+  if (waistChart) waistChart.destroy();
+  if (measures.length) {
+    waistChart = new Chart(waistCtx, {
+      type: 'line',
+      data: { labels: measures.map(m => formatDate(m.date)), datasets: [{ label: 'היקף מותן (ס"מ)', data: measures.map(m => m.waist), borderColor: '#0369a1', backgroundColor: 'rgba(3,105,161,0.08)', borderWidth: 2.5, pointRadius: 4, tension: 0.3, fill: true }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#e0f2fe' }, ticks: { font: { family: 'Heebo' } } }, x: { grid: { display: false }, ticks: { font: { family: 'Heebo', size: 10 }, maxTicksLimit: 6 } } } }
+    });
+  }
+
+  const fatCtx = document.getElementById('fatChart').getContext('2d');
+  if (fatChart) fatChart.destroy();
+  if (fatMeasures.length) {
+    fatChart = new Chart(fatCtx, {
+      type: 'line',
+      data: { labels: fatMeasures.map(m => formatDate(m.date)), datasets: [{ label: '% שומן', data: fatMeasures.map(m => m.fat), borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.08)', borderWidth: 2.5, pointRadius: 4, tension: 0.3, fill: true }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#fef3c7' }, ticks: { font: { family: 'Heebo' } } }, x: { grid: { display: false }, ticks: { font: { family: 'Heebo', size: 10 }, maxTicksLimit: 6 } } } }
+    });
+  }
+}
+
+// ===== NUTRITION =====
+function setNutritionDate() {
+  const el = document.getElementById('nutritionDate');
+  if (!el.value) el.value = todayStr();
+}
+
+function loadNutritionForDate() {
+  const date = document.getElementById('nutritionDate').value || todayStr();
+  const meals = getData('meals-' + date, []);
+  const settings = getSettings();
+
+  const totalCal = meals.reduce((s, m) => s + (m.cal || 0), 0);
+  const totalProt = meals.reduce((s, m) => s + (m.prot || 0), 0);
+  const totalCarb = meals.reduce((s, m) => s + (m.carb || 0), 0);
+  const totalFat = meals.reduce((s, m) => s + (m.fat || 0), 0);
+
+  document.getElementById('totalCal').textContent = totalCal;
+  document.getElementById('totalProt').textContent = totalProt;
+  document.getElementById('totalCarb').textContent = totalCarb;
+  document.getElementById('totalFat').textContent = totalFat;
+  document.getElementById('calProg').textContent = `${totalCal} / ${settings.calTarget}`;
+  document.getElementById('protProg').textContent = `${totalProt} / ${settings.protTarget} גרם`;
+  document.getElementById('calBar').style.width = Math.min(100, (totalCal / settings.calTarget) * 100) + '%';
+  document.getElementById('protBar').style.width = Math.min(100, (totalProt / settings.protTarget) * 100) + '%';
+
+  const el = document.getElementById('mealsList');
+  if (!meals.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">🍽️</div><p>לא נוספו ארוחות לתאריך זה</p></div>'; return; }
+  el.innerHTML = meals.map((m, i) => `
+    <div class="meal-card">
+      <div class="meal-info">
+        <div class="meal-name">${m.name}</div>
+        <div class="meal-macros">חלבון: ${m.prot || 0}ג' | פחמימות: ${m.carb || 0}ג' | שומן: ${m.fat || 0}ג'</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div class="meal-calories">${m.cal}</div>
+        <button class="history-del" onclick="deleteMeal('${date}',${i})">🗑️</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function saveMeal() {
+  const name = document.getElementById('mealName').value.trim();
+  const cal = parseInt(document.getElementById('mealCal').value) || 0;
+  const prot = parseInt(document.getElementById('mealProt').value) || 0;
+  const carb = parseInt(document.getElementById('mealCarb').value) || 0;
+  const fat = parseInt(document.getElementById('mealFat').value) || 0;
+  if (!name || !cal) { showToast('הכנס שם וקלוריות', 'error'); return; }
+
+  const date = document.getElementById('nutritionDate').value || todayStr();
+  const meals = getData('meals-' + date, []);
+  meals.push({ name, cal, prot, carb, fat });
+  setData('meals-' + date, meals);
+
+  document.getElementById('mealName').value = '';
+  document.getElementById('mealCal').value = '';
+  document.getElementById('mealProt').value = '';
+  document.getElementById('mealCarb').value = '';
+  document.getElementById('mealFat').value = '';
+  showToast('✅ ארוחה נוספה!', 'success');
+  loadNutritionForDate();
+}
+
+function deleteMeal(date, idx) {
+  const meals = getData('meals-' + date, []);
+  meals.splice(idx, 1);
+  setData('meals-' + date, meals);
+  loadNutritionForDate();
+}
+
+// ===== WORKOUTS =====
+function switchWorkoutTab(tab, el) {
+  document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('workout-log').style.display = tab === 'log' ? 'block' : 'none';
+  document.getElementById('workout-history').style.display = tab === 'history' ? 'block' : 'none';
+  document.getElementById('workout-progress').style.display = tab === 'progress' ? 'block' : 'none';
+  if (tab === 'history') renderWorkoutHistory();
+  if (tab === 'progress') populateProgressSelect();
+}
+
+function loadExercises() {
+  const muscle = document.getElementById('muscleSelect').value;
+  const el = document.getElementById('exercisesList');
+  const btnEl = document.getElementById('saveWorkoutBtn');
+  if (!muscle) { el.innerHTML = ''; btnEl.style.display = 'none'; return; }
+
+  const exercises = EXERCISES[muscle] || [];
+  el.innerHTML = exercises.map(ex => `
+    <div class="card exercise-item" id="ex-${ex.replace(/\s/g,'_')}">
+      <div class="exercise-name">🏋️ ${ex}</div>
+      <div class="sets-container" id="sets-${ex.replace(/\s/g,'_')}">
+        ${renderSet(ex, 1)}
+      </div>
+      <button class="add-set-btn" onclick="addSet('${ex.replace(/\s/g,'_')}', '${ex}')">+ הוסף סט</button>
+    </div>
+  `).join('');
+  btnEl.style.display = 'block';
+}
+
+function renderSet(ex, num) {
+  const id = ex.replace(/\s/g,'_');
+  return `<div class="set-row" id="set-${id}-${num}">
+    <div class="set-badge">סט ${num}</div>
+    <input type="number" class="set-input" id="weight-${id}-${num}" placeholder="ק"ג" step="0.5" style="max-width:75px;">
+    <span style="font-size:12px;color:var(--text-muted);">×</span>
+    <input type="number" class="set-input" id="reps-${id}-${num}" placeholder="חזרות" style="max-width:70px;">
+  </div>`;
+}
+
+let setCounters = {};
+function addSet(id, name) {
+  setCounters[id] = (setCounters[id] || 1) + 1;
+  const container = document.getElementById('sets-' + id);
+  const div = document.createElement('div');
+  div.innerHTML = renderSet(name, setCounters[id]);
+  container.appendChild(div.firstElementChild);
+}
+
+function saveWorkout() {
+  const muscle = document.getElementById('muscleSelect').value;
+  const date = document.getElementById('workoutDate').value || todayStr();
+  if (!muscle) { showToast('בחר קבוצת שרירים', 'error'); return; }
+
+  const exercises = (EXERCISES[muscle] || []).map(ex => {
+    const id = ex.replace(/\s/g,'_');
+    const count = setCounters[id] || 1;
+    const sets = [];
+    for (let i = 1; i <= count; i++) {
+      const w = document.getElementById('weight-' + id + '-' + i)?.value;
+      const r = document.getElementById('reps-' + id + '-' + i)?.value;
+      if (w || r) sets.push({ weight: parseFloat(w) || 0, reps: parseInt(r) || 0 });
+    }
+    return { name: ex, sets };
+  }).filter(e => e.sets.some(s => s.weight > 0 || s.reps > 0));
+
+  if (!exercises.length) { showToast('הכנס לפחות תרגיל אחד', 'error'); return; }
+
+  const workouts = getData('workouts');
+  workouts.push({ muscle, date, exercises, id: Date.now() });
+  setData('workouts', workouts);
+
+  // Reset
+  document.getElementById('muscleSelect').value = '';
+  document.getElementById('exercisesList').innerHTML = '';
+  document.getElementById('saveWorkoutBtn').style.display = 'none';
+  setCounters = {};
+  showToast('✅ אימון נשמר!', 'success');
+}
+
+function renderWorkoutHistory() {
+  const workouts = getData('workouts').slice().reverse();
+  const el = document.getElementById('workoutHistoryList');
+  if (!workouts.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">💪</div><p>אין אימונים עדיין</p></div>'; return; }
+  el.innerHTML = workouts.slice(0, 20).map((w, i) => `
+    <div class="card" style="margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-weight:700;color:var(--primary);">${w.muscle}</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:12px;color:var(--text-muted);">${formatDate(w.date)}</span>
+          <button class="history-del" onclick="deleteWorkout(${workouts.length - 1 - i})">🗑️</button>
+        </div>
+      </div>
+      ${w.exercises.map(ex => `
+        <div style="font-size:12px;margin-bottom:6px;">
+          <div style="font-weight:600;color:var(--text);margin-bottom:2px;">${ex.name}</div>
+          <div style="color:var(--text-muted);">${ex.sets.map((s,j) => `סט ${j+1}: ${s.weight}ק"ג × ${s.reps}`).join(' | ')}</div>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+function deleteWorkout(idx) {
+  const workouts = getData('workouts');
+  workouts.splice(idx, 1);
+  setData('workouts', workouts);
+  renderWorkoutHistory();
+}
+
+function populateProgressSelect() {
+  const sel = document.getElementById('progressExerciseSelect');
+  const allEx = Object.values(EXERCISES).flat();
+  sel.innerHTML = '<option value="">בחר תרגיל</option>' + allEx.map(e => `<option value="${e}">${e}</option>`).join('');
+}
+
+function showExerciseProgress() {
+  const ex = document.getElementById('progressExerciseSelect').value;
+  const card = document.getElementById('progressChartCard');
+  if (!ex) { card.style.display = 'none'; return; }
+
+  const workouts = getData('workouts');
+  const data = [];
+  workouts.forEach(w => {
+    w.exercises.forEach(e => {
+      if (e.name === ex && e.sets.length) {
+        const maxWeight = Math.max(...e.sets.map(s => s.weight));
+        if (maxWeight > 0) data.push({ date: w.date, weight: maxWeight });
+      }
+    });
+  });
+
+  if (!data.length) { card.style.display = 'none'; showToast('אין נתונים לתרגיל זה', ''); return; }
+
+  card.style.display = 'block';
+  document.getElementById('progressChartTitle').textContent = `📈 ${ex} — התקדמות`;
+  const ctx = document.getElementById('progressChart').getContext('2d');
+  if (progressChart) progressChart.destroy();
+  progressChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: data.map(d => formatDate(d.date)),
+      datasets: [{ label: 'משקל מקסימום (ק"ג)', data: data.map(d => d.weight), borderColor: '#0369a1', backgroundColor: 'rgba(3,105,161,0.1)', borderWidth: 2.5, pointRadius: 5, tension: 0.3, fill: true }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#e0f2fe' }, ticks: { font: { family: 'Heebo' } } }, x: { grid: { display: false }, ticks: { font: { family: 'Heebo', size: 10 } } } } }
+  });
+}
+
+// ===== CHAT =====
+let chatHistory = [];
+
+function getApiKey() { return localStorage.getItem('anthropic_api_key') || ''; }
+
+async function sendMessage() {
+  const input = document.getElementById('chatInput');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+
+  appendMessage('user', msg);
+  chatHistory.push({ role: 'user', content: msg });
+
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    appendMessage('assistant', '🔑 כדי לשוחח איתי, צריך להגדיר מפתח API של Anthropic בהגדרות (⚙️).\n\nעבור להגדרות → הגדר מפתח API');
+    return;
+  }
+
+  // Show typing
+  const typingEl = document.createElement('div');
+  typingEl.className = 'chat-msg assistant';
+  typingEl.id = 'typing';
+  typingEl.innerHTML = '<div class="chat-bubble"><div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>';
+  document.getElementById('chatMessages').appendChild(typingEl);
+  scrollChat();
+
+  // Build context
+  const today = todayStr();
+  const weights = getData('weights');
+  const lastWeight = weights.length ? weights[weights.length - 1] : null;
+  const meals = getData('meals-' + today, []);
+  const totalCal = meals.reduce((s, m) => s + (m.cal || 0), 0);
+  const totalProt = meals.reduce((s, m) => s + (m.prot || 0), 0);
+  const workouts = getData('workouts');
+  const weekWorkouts = workouts.filter(w => {
+    const d = new Date(w.date);
+    const now = new Date();
+    return (now - d) < 7 * 86400000;
+  });
+
+  const systemPrompt = `אתה מאמן כושר ותזונה אישי של אייל, גבר בן 42 שמטרתו להגיע מ-97 ק"ג ו-30% שומן ל-89 ק"ג עד 31/5. יעדים יומיים: 1800 קלוריות, 180 גרם חלבון, 10,000 צעדים, 4 אימונים שבועיים.
+
+נתונים עדכניים:
+- משקל אחרון: ${lastWeight ? lastWeight.weight + ' ק"ג (' + formatDate(lastWeight.date) + ')' : 'לא הוזן'}
+- קלוריות היום: ${totalCal} / 1800
+- חלבון היום: ${totalProt} / 180 גרם
+- אימונים השבוע: ${weekWorkouts.length} / 4
+
+ענה תמיד בעברית, היה תומך אך ישיר, מקצועי ומוטיבציוני. שמור על תגובות קצרות וממוקדות. השתמש באמוג'י במידה.`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({
+        model: 'claude-opus-4-5',
+        max_tokens: 600,
+        system: systemPrompt,
+        messages: chatHistory.slice(-10)
+      })
+    });
+    const data = await response.json();
+    document.getElementById('typing')?.remove();
+
+    if (data.content && data.content[0]) {
+      const reply = data.content[0].text;
+      chatHistory.push({ role: 'assistant', content: reply });
+      appendMessage('assistant', reply);
+    } else {
+      appendMessage('assistant', 'שגיאה בתקשורת עם השרת. בדוק את מפתח ה-API.');
+    }
+  } catch (e) {
+    document.getElementById('typing')?.remove();
+    appendMessage('assistant', 'שגיאת רשת. בדוק את החיבור לאינטרנט.');
+  }
+}
+
+function appendMessage(role, text) {
+  const el = document.createElement('div');
+  el.className = `chat-msg ${role}`;
+  el.innerHTML = `<div class="chat-bubble">${text.replace(/\n/g, '<br>')}</div>`;
+  document.getElementById('chatMessages').appendChild(el);
+  scrollChat();
+}
+
+function scrollChat() {
+  const el = document.getElementById('chatMessages');
+  el.scrollTop = el.scrollHeight;
+}
+
+// ===== SETTINGS =====
+function loadSettings() {
+  const s = getSettings();
+  document.getElementById('settingCalTarget').value = s.calTarget;
+  document.getElementById('settingProtTarget').value = s.protTarget;
+  const apiKey = getApiKey();
+  document.getElementById('apiKeyStatus').textContent = apiKey ? '✅ מוגדר' : '❌ לא מוגדר';
+}
+
+function saveSettings() {
+  const calTarget = parseInt(document.getElementById('settingCalTarget').value) || 1800;
+  const protTarget = parseInt(document.getElementById('settingProtTarget').value) || 180;
+  setData('settings', { calTarget, protTarget });
+  showToast('✅ הגדרות נשמרו!', 'success');
+}
+
+function openApiModal() { document.getElementById('apiModal').classList.add('open'); }
+function closeApiModal() { document.getElementById('apiModal').classList.remove('open'); }
+
+function saveApiKey() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  if (!key.startsWith('sk-')) { showToast('מפתח לא תקין — חייב להתחיל ב-sk-', 'error'); return; }
+  localStorage.setItem('anthropic_api_key', key);
+  document.getElementById('apiKeyStatus').textContent = '✅ מוגדר';
+  closeApiModal();
+  showToast('✅ מפתח API נשמר!', 'success');
+}
+
+function exportData() {
+  const data = {
+    weights: getData('weights'),
+    measurements: getData('measurements'),
+    workouts: getData('workouts'),
+    settings: getSettings(),
+    exported: new Date().toISOString()
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'fitness-data-' + todayStr() + '.json';
+  a.click();
+}
+
+function clearAllData() {
+  if (confirm('האם אתה בטוח? כל הנתונים יימחקו!')) {
+    const keys = Object.keys(localStorage);
+    keys.forEach(k => { if (!k.includes('api_key')) localStorage.removeItem(k); });
+    showToast('🗑️ כל הנתונים נמחקו', '');
+    updateDashboard();
+  }
+}
+
+// ===== INIT =====
+function init() {
+  // Header date
+  const now = new Date();
+  document.getElementById('headerDate').textContent = now.toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long' });
+
+  // Motivations
+  const motivations = [
+    'בוא נעשה את זה קורה. החולצה יורדת ב-31/5! 🏖️',
+    'כל ק"ג שמורד הוא ניצחון קטן 💪',
+    'עקביות היא המפתח. קדימה!',
+    'המאמן שלך מחכה לך 🔥',
+    'היום יכול להיות הכי טוב בשבוע!'
+  ];
+  document.getElementById('dashboardMotivation').textContent = motivations[Math.floor(Math.random() * motivations.length)];
+
+  updateDashboard();
+}
+
+init();
+
+// ===== SERVICE WORKER =====
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
