@@ -539,6 +539,43 @@ body {
 .toast.success { background: var(--success); }
 .toast.error { background: var(--danger); }
 
+/* HEALTH SCORE */
+.health-score-box {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--bg);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  border: 1.5px solid var(--border);
+}
+.health-score-circle {
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; font-weight: 800; color: #fff;
+  flex-shrink: 0;
+}
+.health-score-circle.high   { background: linear-gradient(135deg, var(--success), #34d399); }
+.health-score-circle.medium { background: linear-gradient(135deg, var(--warning), #fcd34d); }
+.health-score-circle.low    { background: linear-gradient(135deg, var(--danger),  #f87171); }
+.health-score-label { font-size: 13px; font-weight: 700; margin-bottom: 3px; }
+.health-score-label.high   { color: var(--success); }
+.health-score-label.medium { color: var(--warning); }
+.health-score-label.low    { color: var(--danger); }
+.health-score-reason { font-size: 12px; color: var(--text-light); line-height: 1.4; }
+.health-score-conf { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+.score-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; border-radius: 50%;
+  font-size: 11px; font-weight: 800; color: #fff;
+  flex-shrink: 0;
+}
+.score-badge.high   { background: var(--success); }
+.score-badge.medium { background: var(--warning); }
+.score-badge.low    { background: var(--danger); }
+
 /* SCROLLBAR */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -794,6 +831,17 @@ body {
 
       <div id="mealCalcResult" style="display:none; margin-top:16px; border-top:1px solid var(--border); padding-top:14px;">
         <div class="card-title" style="margin-bottom:12px;">✅ ערכים מחושבים — בדוק ואשר</div>
+
+        <!-- Health Score Display -->
+        <div class="health-score-box" id="healthScoreDisplay" style="display:none;">
+          <div class="health-score-circle" id="healthScoreCircle">—</div>
+          <div style="flex:1;">
+            <div class="health-score-label" id="healthScoreLabel">ציון בריאות</div>
+            <div class="health-score-reason" id="healthScoreReason"></div>
+            <div class="health-score-conf" id="healthScoreConf"></div>
+          </div>
+        </div>
+
         <div class="form-group">
           <label class="form-label">שם הארוחה</label>
           <input type="text" class="form-input" id="mealName" placeholder="שם הארוחה" />
@@ -818,6 +866,8 @@ body {
             <input type="number" class="form-input" id="mealFat" placeholder="8" />
           </div>
         </div>
+        <!-- Hidden: saved with meal -->
+        <input type="hidden" id="mealHealthScore" />
         <button class="btn btn-success" onclick="saveMeal()">➕ הוסף ארוחה</button>
       </div>
     </div>
@@ -1277,50 +1327,58 @@ async function calcNutrition() {
   const description = document.getElementById('mealDescription').value.trim();
   if (!description) { showToast('תאר מה אכלת', 'error'); return; }
 
-  const apiKey = getApiKey();
-  if (!apiKey) {
-    showToast('הגדר מפתח API בהגדרות תחילה ⚙️', 'error');
-    return;
-  }
-
   const btn = document.getElementById('calcNutritionBtn');
   btn.disabled = true;
-  btn.textContent = '⏳ מחשב...';
+  btn.textContent = '⏳ מנתח...';
 
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch('/.netlify/functions/analyze-meal', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 200,
-        messages: [{ role: 'user', content: `המשתמש אכל: ${description}. חשב קלוריות, חלבון, פחמימות ושומן. החזר JSON בלבד בפורמט: {"cal": number, "prot": number, "carb": number, "fat": number, "name": "string"}` }]
-      })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: description })
     });
-    const data = await response.json();
-    if (data.content && data.content[0]) {
-      const match = data.content[0].text.match(/\{[\s\S]*\}/);
-      if (match) {
-        const n = JSON.parse(match[0]);
-        document.getElementById('mealName').value = n.name || description;
-        document.getElementById('mealCal').value = n.cal || '';
-        document.getElementById('mealProt').value = n.prot || '';
-        document.getElementById('mealCarb').value = n.carb || '';
-        document.getElementById('mealFat').value = n.fat || '';
-        document.getElementById('mealCalcResult').style.display = 'block';
-        showToast('✅ ערכים חושבו!', 'success');
-      } else {
-        showToast('שגיאה בניתוח תשובת ה-AI', 'error');
-      }
-    } else {
-      showToast('שגיאה: ' + (data.error?.message || 'בדוק את מפתח ה-API'), 'error');
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || 'שגיאת שרת ' + response.status);
     }
+
+    const n = await response.json();
+
+    document.getElementById('mealName').value  = n.name || description;
+    document.getElementById('mealCal').value   = n.cal  || '';
+    document.getElementById('mealProt').value  = n.prot || '';
+    document.getElementById('mealCarb').value  = n.carb || '';
+    document.getElementById('mealFat').value   = n.fat  || '';
+    document.getElementById('mealHealthScore').value = n.health_score || '';
+
+    showHealthScore(n.health_score, n.health_reason, n.confidence_pct);
+    document.getElementById('mealCalcResult').style.display = 'block';
+    showToast('✅ ערכים חושבו!', 'success');
   } catch (e) {
-    showToast('שגיאת רשת', 'error');
+    showToast('שגיאה: ' + e.message, 'error');
   } finally {
     btn.disabled = false;
     btn.textContent = '✨ חשב ערכים תזונתיים';
   }
+}
+
+function showHealthScore(score, reason, confidence) {
+  if (!score) return;
+  const tier  = score >= 8 ? 'high' : score >= 6 ? 'medium' : 'low';
+  const label = score >= 8 ? `מצוין — ציון ${score}/10` : score >= 6 ? `סביר — ציון ${score}/10` : `נמוך — ציון ${score}/10`;
+
+  const circle = document.getElementById('healthScoreCircle');
+  circle.textContent = score;
+  circle.className = `health-score-circle ${tier}`;
+
+  const lbl = document.getElementById('healthScoreLabel');
+  lbl.textContent = label;
+  lbl.className = `health-score-label ${tier}`;
+
+  document.getElementById('healthScoreReason').textContent = reason || '';
+  document.getElementById('healthScoreConf').textContent   = confidence ? `רמת ביטחון: ${confidence}%` : '';
+  document.getElementById('healthScoreDisplay').style.display = 'flex';
 }
 
 function setNutritionDate() {
@@ -1354,42 +1412,50 @@ function loadNutritionForDate() {
 
   const el = document.getElementById('mealsList');
   if (!meals.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">🍽️</div><p>לא נוספו ארוחות לתאריך זה</p></div>'; return; }
-  el.innerHTML = meals.map((m, i) => `
+  el.innerHTML = meals.map((m, i) => {
+    const tier  = m.score >= 8 ? 'high' : m.score >= 6 ? 'medium' : 'low';
+    const badge = m.score ? `<span class="score-badge ${tier}" title="ציון בריאות">${m.score}</span>` : '';
+    return `
     <div class="meal-card">
       <div class="meal-info">
-        <div class="meal-name">${m.name}${m.time ? `<span style="font-size:11px;color:var(--text-muted);font-weight:400;margin-right:6px;">🕐 ${m.time}</span>` : ''}</div>
+        <div class="meal-name" style="display:flex;align-items:center;gap:6px;">
+          ${badge}${m.name}${m.time ? `<span style="font-size:11px;color:var(--text-muted);font-weight:400;margin-right:4px;">🕐 ${m.time}</span>` : ''}
+        </div>
         <div class="meal-macros">חלבון: ${m.prot || 0}ג' | פחמימות: ${m.carb || 0}ג' | שומן: ${m.fat || 0}ג'</div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
         <div class="meal-calories">${m.cal}</div>
         <button class="history-del" onclick="deleteMeal('${date}',${i})">🗑️</button>
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 }
 
 function saveMeal() {
-  const name = document.getElementById('mealName').value.trim();
-  const cal = parseInt(document.getElementById('mealCal').value) || 0;
-  const prot = parseInt(document.getElementById('mealProt').value) || 0;
-  const carb = parseInt(document.getElementById('mealCarb').value) || 0;
-  const fat = parseInt(document.getElementById('mealFat').value) || 0;
-  const time = document.getElementById('mealTime').value || '';
+  const name  = document.getElementById('mealName').value.trim();
+  const cal   = parseInt(document.getElementById('mealCal').value)  || 0;
+  const prot  = parseInt(document.getElementById('mealProt').value) || 0;
+  const carb  = parseInt(document.getElementById('mealCarb').value) || 0;
+  const fat   = parseInt(document.getElementById('mealFat').value)  || 0;
+  const time  = document.getElementById('mealTime').value || '';
+  const score = parseInt(document.getElementById('mealHealthScore').value) || null;
   if (!name || !cal) { showToast('הכנס שם וקלוריות', 'error'); return; }
 
-  const date = document.getElementById('nutritionDate').value || todayStr();
+  const date  = document.getElementById('nutritionDate').value || todayStr();
   const meals = getData('meals-' + date, []);
-  meals.push({ name, cal, prot, carb, fat, time });
+  meals.push({ name, cal, prot, carb, fat, time, score });
   setData('meals-' + date, meals);
 
   document.getElementById('mealDescription').value = '';
   document.getElementById('mealTime').value = '';
   document.getElementById('mealName').value = '';
-  document.getElementById('mealCal').value = '';
+  document.getElementById('mealCal').value  = '';
   document.getElementById('mealProt').value = '';
   document.getElementById('mealCarb').value = '';
-  document.getElementById('mealFat').value = '';
-  document.getElementById('mealCalcResult').style.display = 'none';
+  document.getElementById('mealFat').value  = '';
+  document.getElementById('mealHealthScore').value = '';
+  document.getElementById('mealCalcResult').style.display  = 'none';
+  document.getElementById('healthScoreDisplay').style.display = 'none';
   showToast('✅ ארוחה נוספה!', 'success');
   loadNutritionForDate();
 }
