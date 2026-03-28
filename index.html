@@ -1332,7 +1332,7 @@ async function calcNutrition() {
   btn.textContent = '⏳ מנתח...';
 
   try {
-    const response = await fetch('/.netlify/functions/analyze-meal', {
+    const response = await fetch('/api/analyze-meal', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text: description })
