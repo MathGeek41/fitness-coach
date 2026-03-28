@@ -3,7 +3,7 @@
 //   GEMINI_API_KEY  — required
 //   USDA_API_KEY    — optional (adds verification layer)
 
-const GEMINI_KEY = process.env.GEMIMI_API_KEY;
+const GEMINI_KEY = process.env.GEMINI_API_KEY;
 const USDA_KEY   = process.env.FDC_API;
 
 // ── Step 1: Gemini parses Hebrew text + estimates nutrition ──
