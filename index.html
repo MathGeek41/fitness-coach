@@ -576,6 +576,47 @@ body {
 .score-badge.medium { background: var(--warning); }
 .score-badge.low    { background: var(--danger); }
 
+/* PROGRESS ARROWS */
+.trend-up   { color: var(--success); font-size: 15px; font-weight: 800; }
+.trend-down { color: var(--danger);  font-size: 15px; font-weight: 800; }
+.trend-same { color: var(--text-muted); font-size: 15px; }
+
+/* LAST WEIGHT BADGE */
+.last-weight-badge {
+  font-size: 11px; color: var(--text-muted);
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 5px 10px;
+  margin-bottom: 8px; display: block; line-height: 1.5;
+}
+
+/* SET COUNT SELECT */
+.set-count-row {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 10px;
+}
+.set-count-select {
+  border: 1.5px solid var(--border); border-radius: 8px;
+  padding: 5px 10px; font-size: 13px;
+  font-family: 'Heebo', sans-serif; color: var(--text);
+  background: var(--bg); cursor: pointer;
+}
+
+/* NUTRITION TABLE */
+.nutrition-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.nutrition-table th {
+  text-align: center; padding: 6px 4px;
+  color: var(--text-muted); font-weight: 600;
+  border-bottom: 1.5px solid var(--border); font-size: 11px;
+}
+.nutrition-table td { text-align: center; padding: 7px 4px; border-bottom: 1px solid var(--bg); vertical-align: middle; }
+.nutrition-table td:first-child { text-align: right; font-weight: 600; }
+.nutrition-table tr:last-child td { border-bottom: none; }
+.nutrition-table .total-row td { font-weight: 800; color: var(--primary); border-top: 2px solid var(--border); }
+.nutrition-table .target-row td { color: var(--text-muted); font-size: 11px; }
+.nutrition-table .remain-row td { font-weight: 700; font-size: 11px; }
+.nutrition-table .over  { color: var(--danger); }
+.nutrition-table .under { color: var(--success); }
+
 /* SCROLLBAR */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -1412,23 +1453,50 @@ function loadNutritionForDate() {
 
   const el = document.getElementById('mealsList');
   if (!meals.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">🍽️</div><p>לא נוספו ארוחות לתאריך זה</p></div>'; return; }
-  el.innerHTML = meals.map((m, i) => {
+
+  const remCal  = settings.calTarget  - totalCal;
+  const remProt = settings.protTarget - totalProt;
+
+  const rows = meals.map((m, i) => {
     const tier  = m.score >= 8 ? 'high' : m.score >= 6 ? 'medium' : 'low';
-    const badge = m.score ? `<span class="score-badge ${tier}" title="ציון בריאות">${m.score}</span>` : '';
-    return `
-    <div class="meal-card">
-      <div class="meal-info">
-        <div class="meal-name" style="display:flex;align-items:center;gap:6px;">
-          ${badge}${m.name}${m.time ? `<span style="font-size:11px;color:var(--text-muted);font-weight:400;margin-right:4px;">🕐 ${m.time}</span>` : ''}
-        </div>
-        <div class="meal-macros">חלבון: ${m.prot || 0}ג' | פחמימות: ${m.carb || 0}ג' | שומן: ${m.fat || 0}ג'</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <div class="meal-calories">${m.cal}</div>
-        <button class="history-del" onclick="deleteMeal('${date}',${i})">🗑️</button>
-      </div>
-    </div>`;
+    const badge = m.score ? `<span class="score-badge ${tier}">${m.score}</span>` : '—';
+    return `<tr>
+      <td class="" style="text-align:right;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+        ${m.name}${m.time ? `<br><span style="font-size:10px;color:var(--text-muted);">🕐${m.time}</span>` : ''}
+      </td>
+      <td>${m.cal}</td>
+      <td>${m.prot || 0}</td>
+      <td>${m.carb || 0}</td>
+      <td>${m.fat  || 0}</td>
+      <td>${badge}</td>
+      <td><button class="history-del" onclick="deleteMeal('${date}',${i})">🗑️</button></td>
+    </tr>`;
   }).join('');
+
+  el.innerHTML = `
+  <table class="nutrition-table">
+    <thead><tr>
+      <th style="text-align:right;">ארוחה</th>
+      <th>קל'</th><th>חלבון</th><th>פחמ'</th><th>שומן</th><th>ציון</th><th></th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+    <tfoot>
+      <tr class="total-row">
+        <td>סה"כ</td>
+        <td>${totalCal}</td><td>${totalProt}</td><td>${totalCarb}</td><td>${totalFat}</td><td colspan="2"></td>
+      </tr>
+      <tr class="target-row">
+        <td>יעד</td>
+        <td>${settings.calTarget}</td><td>${settings.protTarget}</td><td>—</td><td>—</td><td colspan="2"></td>
+      </tr>
+      <tr class="remain-row">
+        <td>נותר</td>
+        <td class="${remCal < 0 ? 'over' : 'under'}">${remCal < 0 ? '+' + Math.abs(remCal) + ' עודף' : remCal}</td>
+        <td class="${remProt < 0 ? 'over' : 'under'}">${remProt < 0 ? '+' + Math.abs(remProt) + ' עודף' : remProt}</td>
+        <td colspan="4"></td>
+      </tr>
+    </tfoot>
+  </table>`;
 }
 
 function saveMeal() {
@@ -1468,6 +1536,30 @@ function deleteMeal(date, idx) {
 }
 
 // ===== WORKOUTS =====
+
+// Returns the last recorded sets for a given exercise name
+function getLastExerciseData(exerciseName) {
+  const workouts = getData('workouts').slice().reverse();
+  for (const w of workouts) {
+    const ex = w.exercises.find(e => e.name === exerciseName);
+    if (ex && ex.sets.length) return { sets: ex.sets, date: w.date };
+  }
+  return null;
+}
+
+// Returns max weight from a sets array
+function maxWeight(sets) { return sets.length ? Math.max(...sets.map(s => s.weight || 0)) : 0; }
+
+// Returns HTML trend arrow comparing currentMax to previous record
+function trendArrow(exerciseName, currentMax) {
+  const last = getLastExerciseData(exerciseName);
+  if (!last) return '';
+  const prev = maxWeight(last.sets);
+  if (currentMax > prev) return '<span class="trend-up">↑</span>';
+  if (currentMax < prev) return '<span class="trend-down">↓</span>';
+  return '<span class="trend-same">→</span>';
+}
+
 function switchWorkoutTab(tab, el) {
   document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
@@ -1485,16 +1577,39 @@ function loadExercises() {
   if (!muscle) { el.innerHTML = ''; btnEl.style.display = 'none'; return; }
 
   const exercises = EXERCISES[muscle] || [];
-  el.innerHTML = exercises.map(ex => `
-    <div class="card exercise-item" id="ex-${ex.replace(/\s/g,'_')}">
+  el.innerHTML = exercises.map(ex => {
+    const id = ex.replace(/\s/g,'_');
+    const last = getLastExerciseData(ex);
+    const lastBadge = last
+      ? `<div class="last-weight-badge">⏱ אחרון (${formatDate(last.date)}): ${last.sets.map((s,i) => `סט ${i+1}: ${s.weight}ק"ג × ${s.reps}`).join(' | ')}</div>`
+      : '';
+    const setOptions = [1,2,3,4,5,6].map(n => `<option value="${n}"${n===3?' selected':''}>${n} סטים</option>`).join('');
+    const defaultSets = [1,2,3].map(n => renderSet(ex, n)).join('');
+    return `
+    <div class="card exercise-item" id="ex-${id}">
       <div class="exercise-name">🏋️ ${ex}</div>
-      <div class="sets-container" id="sets-${ex.replace(/\s/g,'_')}">
-        ${renderSet(ex, 1)}
+      ${lastBadge}
+      <div class="set-count-row">
+        <span style="font-size:12px;color:var(--text-light);font-weight:600;">מספר סטים:</span>
+        <select class="set-count-select" onchange="setSetCount('${id}','${ex}',this.value)">${setOptions}</select>
       </div>
-      <button class="add-set-btn" onclick="addSet('${ex.replace(/\s/g,'_')}', '${ex}')">+ הוסף סט</button>
-    </div>
-  `).join('');
+      <div class="sets-container" id="sets-${id}">${defaultSets}</div>
+    </div>`;
+  }).join('');
+  exercises.forEach(ex => { setCounters[ex.replace(/\s/g,'_')] = 3; });
   btnEl.style.display = 'block';
+}
+
+function setSetCount(id, name, count) {
+  count = parseInt(count);
+  setCounters[id] = count;
+  const container = document.getElementById('sets-' + id);
+  container.innerHTML = '';
+  for (let i = 1; i <= count; i++) {
+    const div = document.createElement('div');
+    div.innerHTML = renderSet(name, i);
+    container.appendChild(div.firstElementChild);
+  }
 }
 
 function renderSet(ex, num) {
@@ -1551,21 +1666,32 @@ function renderWorkoutHistory() {
   const workouts = getData('workouts').slice().reverse();
   const el = document.getElementById('workoutHistoryList');
   if (!workouts.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">💪</div><p>אין אימונים עדיין</p></div>'; return; }
-  el.innerHTML = workouts.slice(0, 20).map((w, i) => `
+  el.innerHTML = workouts.slice(0, 20).map((w, wi) => `
     <div class="card" style="margin-bottom:10px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
         <div style="font-weight:700;color:var(--primary);">${w.muscle}</div>
         <div style="display:flex;align-items:center;gap:8px;">
           <span style="font-size:12px;color:var(--text-muted);">${formatDate(w.date)}</span>
-          <button class="history-del" onclick="deleteWorkout(${workouts.length - 1 - i})">🗑️</button>
+          <button class="history-del" onclick="deleteWorkout(${workouts.length - 1 - wi})">🗑️</button>
         </div>
       </div>
-      ${w.exercises.map(ex => `
+      ${w.exercises.map(ex => {
+        const curMax = maxWeight(ex.sets);
+        const prevWorkout = workouts.slice(wi + 1).find(pw => pw.exercises.some(pe => pe.name === ex.name));
+        let arrow = '';
+        if (prevWorkout) {
+          const prevEx = prevWorkout.exercises.find(pe => pe.name === ex.name);
+          const prevMax = prevEx ? maxWeight(prevEx.sets) : 0;
+          if (curMax > prevMax)      arrow = '<span class="trend-up">↑</span> ';
+          else if (curMax < prevMax) arrow = '<span class="trend-down">↓</span> ';
+          else                       arrow = '<span class="trend-same">→</span> ';
+        }
+        return `
         <div style="font-size:12px;margin-bottom:6px;">
-          <div style="font-weight:600;color:var(--text);margin-bottom:2px;">${ex.name}</div>
+          <div style="font-weight:600;color:var(--text);margin-bottom:2px;display:flex;align-items:center;gap:4px;">${arrow}${ex.name}</div>
           <div style="color:var(--text-muted);">${ex.sets.map((s,j) => `סט ${j+1}: ${s.weight}ק"ג × ${s.reps}`).join(' | ')}</div>
-        </div>
-      `).join('')}
+        </div>`;
+      }).join('')}
     </div>
   `).join('');
 }
