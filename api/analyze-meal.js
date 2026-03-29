@@ -14,7 +14,7 @@ async function analyzeWithGemini(userText) {
 
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
   const model = genAI.getGenerativeModel({
-    model: 'gemini-2.0-flash',
+    model: 'gemini-2.0-flash-001',
     generationConfig: { temperature: 0.1, maxOutputTokens: 1200 }
   });
 
