@@ -12,9 +12,9 @@ async function analyzeWithGemini(userText) {
   if (!process.env.GEMINI_API_KEY) throw new Error('GEMINI_API_KEY not configured');
   console.log('GEMINI_API_KEY prefix:', process.env.GEMINI_API_KEY.slice(0, 4));
 
-  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY, { apiVersion: 'v1' });
+  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
   const model = genAI.getGenerativeModel({
-    model: 'gemini-1.5-flash',
+    model: 'gemini-2.0-flash',
     generationConfig: { temperature: 0.1, maxOutputTokens: 1200 }
   });
 
