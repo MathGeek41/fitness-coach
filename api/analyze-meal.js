@@ -54,6 +54,7 @@ async function analyzeWithGemini(userText) {
 
   if (!response.ok) throw new Error(`Gemini error: ${response.status}`);
   const data = await response.json();
+  console.log('RAW GEMINI:', JSON.stringify(data));
   const raw = data.candidates[0].content.parts[0].text;
   const cleaned = raw
     .replace(/```json\n?/g, '')
