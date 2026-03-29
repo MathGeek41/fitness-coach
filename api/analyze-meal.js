@@ -54,9 +54,14 @@ async function analyzeWithGemini(userText) {
 
   if (!response.ok) throw new Error(`Gemini error: ${response.status}`);
   const data = await response.json();
-  const raw = data.candidates[0].content.parts[0].text
-    .replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-  return JSON.parse(raw);
+  const raw = data.candidates[0].content.parts[0].text;
+  const cleaned = raw
+    .replace(/```json\n?/g, '')
+    .replace(/```\n?/g, '')
+    .trim();
+  const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error('No JSON found in response');
+  return JSON.parse(jsonMatch[0]);
 }
 
 // ── Step 2: USDA FoodData Central verifies each food item ───
