@@ -10,7 +10,6 @@ const USDA_KEY = process.env.FDC_API;
 // ── Step 1: Gemini parses Hebrew text + estimates nutrition ──
 async function analyzeWithGemini(userText) {
   if (!process.env.GEMINI_API_KEY) throw new Error('GEMINI_API_KEY not configured');
-  console.log('GEMINI_API_KEY prefix:', process.env.GEMINI_API_KEY.slice(0, 4));
 
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
   const model = genAI.getGenerativeModel({
