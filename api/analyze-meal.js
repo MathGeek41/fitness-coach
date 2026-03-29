@@ -47,7 +47,7 @@ async function analyzeWithGemini(userText) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.1, maxOutputTokens: 1200 }
+        generationConfig: { temperature: 0.1, maxOutputTokens: 2048 }
       })
     }
   );
