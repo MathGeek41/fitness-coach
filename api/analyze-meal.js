@@ -3,12 +3,19 @@
 //   GEMINI_API_KEY  — required
 //   FDC_API         — optional (USDA FoodData Central verification)
 
-const GEMINI_KEY = process.env.GEMINI_API_KEY;
-const USDA_KEY   = process.env.FDC_API;
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+
+const USDA_KEY = process.env.FDC_API;
 
 // ── Step 1: Gemini parses Hebrew text + estimates nutrition ──
 async function analyzeWithGemini(userText) {
-  if (!GEMINI_KEY) throw new Error('GEMINI_API_KEY not configured');
+  if (!process.env.GEMINI_API_KEY) throw new Error('GEMINI_API_KEY not configured');
+
+  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+  const model = genAI.getGenerativeModel({
+    model: 'gemini-1.5-flash',
+    generationConfig: { temperature: 0.1, maxOutputTokens: 1200 }
+  });
 
   const prompt = `אתה מומחה תזונה. המשתמש תיאר ארוחה בעברית.
 נתח אותה והחזר אך ורק JSON תקני (ללא markdown, ללא הסבר, רק JSON):
@@ -41,25 +48,8 @@ async function analyzeWithGemini(userText) {
 
 ארוחה: ${userText}`;
 
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.1, maxOutputTokens: 1200 }
-      })
-    }
-  );
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error('Gemini error: ' + (err.error?.message || res.status));
-  }
-
-  const data = await res.json();
-  const raw = data.candidates[0].content.parts[0].text.trim()
+  const result = await model.generateContent(prompt);
+  const raw = result.response.text().trim()
     .replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
   return JSON.parse(raw);
 }
