@@ -1122,7 +1122,7 @@ let weightChart = null, waistChart = null, fatChart = null, progressChart = null
 function getData(key, def = []) {
   try { return JSON.parse(localStorage.getItem(key)) || def; } catch { return def; }
 }
-function setData(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+function setData(key, val) { localStorage.setItem(key, JSON.stringify(val)); autoBackup(); }
 
 function getSettings() {
   return getData('settings', { calTarget: 1800, protTarget: 180 });
@@ -1868,6 +1868,7 @@ function saveApiKey() {
   const key = document.getElementById('apiKeyInput').value.trim();
   if (!key.startsWith('sk-')) { showToast('מפתח לא תקין — חייב להתחיל ב-sk-', 'error'); return; }
   localStorage.setItem('anthropic_api_key', key);
+  autoBackup();
   document.getElementById('apiKeyStatus').textContent = '✅ מוגדר';
   closeApiModal();
   showToast('✅ מפתח API נשמר!', 'success');
@@ -1999,6 +2000,49 @@ async function driveBackup() {
     showToast('✅ גיבוי נשמר ב-Drive!', 'success');
   } catch (e) {
     showToast('שגיאה בגיבוי: ' + e.message, 'error');
+  }
+}
+
+async function autoBackup() {
+  if (!driveAccessToken) return;
+
+  const backup = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    backup[key] = localStorage.getItem(key);
+  }
+  const content = JSON.stringify(backup, null, 2);
+
+  try {
+    const searchRes = await fetch(
+      `https://www.googleapis.com/drive/v3/files?q=name='${BACKUP_FILENAME}'&spaces=drive&fields=files(id,name)`,
+      { headers: { Authorization: `Bearer ${driveAccessToken}` } }
+    );
+    const searchData = await searchRes.json();
+    const existingFile = searchData.files?.[0];
+
+    let url, method;
+    if (existingFile) {
+      url    = `https://www.googleapis.com/upload/drive/v3/files/${existingFile.id}?uploadType=media`;
+      method = 'PATCH';
+    } else {
+      const meta = await fetch('https://www.googleapis.com/drive/v3/files', {
+        method:  'POST',
+        headers: { Authorization: `Bearer ${driveAccessToken}`, 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ name: BACKUP_FILENAME, mimeType: 'application/json' })
+      });
+      const metaData = await meta.json();
+      url    = `https://www.googleapis.com/upload/drive/v3/files/${metaData.id}?uploadType=media`;
+      method = 'PATCH';
+    }
+
+    await fetch(url, {
+      method,
+      headers: { Authorization: `Bearer ${driveAccessToken}`, 'Content-Type': 'application/json' },
+      body: content
+    });
+  } catch (e) {
+    showToast('שגיאת גיבוי אוטומטי: ' + e.message, 'error');
   }
 }
 
