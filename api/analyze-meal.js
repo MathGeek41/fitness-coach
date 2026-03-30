@@ -40,26 +40,30 @@ async function analyzeWithGemini(userText) {
 
 ארוחה: ${userText}`;
 
+  const requestBody = {
+    contents: [{ parts: [{ text: prompt }] }],
+    generationConfig: { temperature: 0.1, maxOutputTokens: 8192 },
+    thinkingConfig: { thinkingBudget: 0 }
+  };
+  console.log('GEMINI REQUEST BODY:', JSON.stringify(requestBody));
+
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.1, maxOutputTokens: 8192 },
-        thinkingConfig: { thinkingBudget: 0 }
-      })
+      body: JSON.stringify(requestBody)
     }
   );
 
+  const responseText = await response.text();
+  console.log('GEMINI RESPONSE:', responseText);
+
   if (!response.ok) {
-    const errBody = await response.json().catch(() => ({}));
-    console.error('GEMINI ERROR BODY:', JSON.stringify(errBody));
-    throw new Error(`Gemini error: ${response.status} — ${errBody?.error?.message || 'unknown'}`);
+    const errBody = JSON.parse(responseText).catch?.() ?? {};
+    throw new Error(`Gemini error: ${response.status} — ${responseText}`);
   }
-  const data = await response.json();
-  console.log('RAW GEMINI:', JSON.stringify(data));
+  const data = JSON.parse(responseText);
   const raw = data.candidates[0].content.parts[0].text;
   const cleaned = raw
     .replace(/```json\n?/g, '')
