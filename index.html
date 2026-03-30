@@ -1185,11 +1185,12 @@ function updateDashboard() {
   document.getElementById('dashCalBar').style.width = Math.min(100, (totalCal / settings.calTarget) * 100) + '%';
   document.getElementById('dashProtBar').style.width = Math.min(100, (totalProt / settings.protTarget) * 100) + '%';
 
-  // Workouts this week
+  // Workouts this week (Sunday–Saturday)
   const allWorkouts = getData('workouts');
   const weekStart = new Date();
   weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-  const weekWorkouts = allWorkouts.filter(w => new Date(w.date) >= weekStart);
+  weekStart.setHours(0, 0, 0, 0);
+  const weekWorkouts = allWorkouts.filter(w => new Date(w.date + 'T00:00:00') >= weekStart);
   document.getElementById('dashWorkouts').textContent = weekWorkouts.length;
 
   // Last workout
@@ -1823,7 +1824,8 @@ async function sendMessage() {
   const totalCal  = meals.reduce((s, m) => s + (m.cal  || 0), 0);
   const totalProt = meals.reduce((s, m) => s + (m.prot || 0), 0);
   const workouts  = getData('workouts');
-  const weekWorkouts = workouts.filter(w => (new Date() - new Date(w.date)) < 7 * 86400000);
+  const _ws = new Date(); _ws.setDate(_ws.getDate() - _ws.getDay()); _ws.setHours(0,0,0,0);
+  const weekWorkouts = workouts.filter(w => new Date(w.date + 'T00:00:00') >= _ws);
 
   try {
     const response = await fetch('/api/chat', {
