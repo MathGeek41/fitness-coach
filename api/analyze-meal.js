@@ -42,8 +42,7 @@ async function analyzeWithGemini(userText) {
 
   const requestBody = {
     contents: [{ parts: [{ text: prompt }] }],
-    generationConfig: { temperature: 0.1, maxOutputTokens: 8192 },
-    thinkingConfig: { thinkingBudget: 0 }
+    generationConfig: { temperature: 0.1, maxOutputTokens: 8192 }
   };
   console.log('GEMINI REQUEST BODY:', JSON.stringify(requestBody));
 
