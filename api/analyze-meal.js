@@ -53,7 +53,11 @@ async function analyzeWithGemini(userText) {
     }
   );
 
-  if (!response.ok) throw new Error(`Gemini error: ${response.status}`);
+  if (!response.ok) {
+    const errBody = await response.json().catch(() => ({}));
+    console.error('GEMINI ERROR BODY:', JSON.stringify(errBody));
+    throw new Error(`Gemini error: ${response.status} — ${errBody?.error?.message || 'unknown'}`);
+  }
   const data = await response.json();
   console.log('RAW GEMINI:', JSON.stringify(data));
   const raw = data.candidates[0].content.parts[0].text;
