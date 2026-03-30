@@ -622,6 +622,7 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
 </style>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 
@@ -1057,6 +1058,17 @@ body {
         <span class="settings-value" id="apiKeyStatus">לא מוגדר</span>
       </div>
       <button class="btn btn-outline" onclick="openApiModal()" style="margin-top:8px;">הגדר מפתח API</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">☁️ גיבוי Google Drive</div>
+      <div class="settings-item" style="margin-bottom:10px;">
+        <span class="settings-label">סטטוס</span>
+        <span class="settings-value" id="driveStatus">לא מחובר</span>
+      </div>
+      <button class="btn btn-outline" onclick="driveSignIn()" style="margin-bottom:8px;">🔑 התחבר לגוגל</button>
+      <button class="btn btn-primary" onclick="driveBackup()" style="margin-bottom:8px;">☁️ גיבוי ל-Drive</button>
+      <button class="btn btn-outline" onclick="driveRestore()">📥 שחזר מ-Drive</button>
     </div>
 
     <div class="card">
@@ -1912,6 +1924,117 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
   });
 }
+</script>
+<script>
+// ===== GOOGLE DRIVE BACKUP =====
+const DRIVE_CLIENT_ID = '801705912089-jt8q5s38hsj1c599kf43lf33590t6hqp.apps.googleusercontent.com';
+const DRIVE_SCOPE     = 'https://www.googleapis.com/auth/drive.file';
+const BACKUP_FILENAME = 'fitness-coach-backup.json';
+
+let driveTokenClient = null;
+let driveAccessToken = null;
+
+function initDrive() {
+  if (typeof google === 'undefined' || !google.accounts) return;
+  driveTokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: DRIVE_CLIENT_ID,
+    scope:     DRIVE_SCOPE,
+    callback:  (resp) => {
+      if (resp.error) { showToast('שגיאת התחברות לגוגל', 'error'); return; }
+      driveAccessToken = resp.access_token;
+      document.getElementById('driveStatus').textContent = '✅ מחובר';
+      showToast('✅ מחובר ל-Google Drive', 'success');
+    }
+  });
+}
+
+function driveSignIn() {
+  if (!driveTokenClient) { showToast('Google API לא נטען עדיין', 'error'); return; }
+  driveTokenClient.requestAccessToken();
+}
+
+async function driveBackup() {
+  if (!driveAccessToken) { showToast('התחבר לגוגל תחילה', 'error'); return; }
+
+  // Collect all localStorage data
+  const backup = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    backup[key] = localStorage.getItem(key);
+  }
+  const content = JSON.stringify(backup, null, 2);
+
+  try {
+    // Check if backup file already exists
+    const searchRes = await fetch(
+      `https://www.googleapis.com/drive/v3/files?q=name='${BACKUP_FILENAME}'&spaces=drive&fields=files(id,name)`,
+      { headers: { Authorization: `Bearer ${driveAccessToken}` } }
+    );
+    const searchData = await searchRes.json();
+    const existingFile = searchData.files?.[0];
+
+    let url, method;
+    if (existingFile) {
+      // Update existing file
+      url    = `https://www.googleapis.com/upload/drive/v3/files/${existingFile.id}?uploadType=media`;
+      method = 'PATCH';
+    } else {
+      // Create new file
+      const meta = await fetch('https://www.googleapis.com/drive/v3/files', {
+        method:  'POST',
+        headers: { Authorization: `Bearer ${driveAccessToken}`, 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ name: BACKUP_FILENAME, mimeType: 'application/json' })
+      });
+      const metaData = await meta.json();
+      url    = `https://www.googleapis.com/upload/drive/v3/files/${metaData.id}?uploadType=media`;
+      method = 'PATCH';
+    }
+
+    await fetch(url, {
+      method,
+      headers: { Authorization: `Bearer ${driveAccessToken}`, 'Content-Type': 'application/json' },
+      body: content
+    });
+
+    showToast('✅ גיבוי נשמר ב-Drive!', 'success');
+  } catch (e) {
+    showToast('שגיאה בגיבוי: ' + e.message, 'error');
+  }
+}
+
+async function driveRestore() {
+  if (!driveAccessToken) { showToast('התחבר לגוגל תחילה', 'error'); return; }
+
+  try {
+    // Find the backup file
+    const searchRes = await fetch(
+      `https://www.googleapis.com/drive/v3/files?q=name='${BACKUP_FILENAME}'&spaces=drive&fields=files(id,name)`,
+      { headers: { Authorization: `Bearer ${driveAccessToken}` } }
+    );
+    const searchData = await searchRes.json();
+    const file = searchData.files?.[0];
+    if (!file) { showToast('לא נמצא קובץ גיבוי ב-Drive', 'error'); return; }
+
+    // Download file content
+    const dlRes = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`,
+      { headers: { Authorization: `Bearer ${driveAccessToken}` } }
+    );
+    const backup = await dlRes.json();
+
+    if (!confirm('שחזור יחליף את כל הנתונים הנוכחיים. להמשיך?')) return;
+
+    localStorage.clear();
+    Object.entries(backup).forEach(([key, val]) => localStorage.setItem(key, val));
+    showToast('✅ נתונים שוחזרו בהצלחה!', 'success');
+    setTimeout(() => location.reload(), 1200);
+  } catch (e) {
+    showToast('שגיאה בשחזור: ' + e.message, 'error');
+  }
+}
+
+// Auto-init when Google GSI is ready
+window.addEventListener('load', () => setTimeout(initDrive, 1000));
 </script>
 </body>
 </html>
