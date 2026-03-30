@@ -1568,6 +1568,8 @@ function loadExercises() {
   if (!muscle) { el.innerHTML = ''; btnEl.style.display = 'none'; return; }
 
   const exercises = EXERCISES[muscle] || [];
+  customExercises = [];
+  customExCounter = 0;
   el.innerHTML = exercises.map(ex => {
     const id = ex.replace(/\s/g,'_');
     const last = getLastExerciseData(ex);
@@ -1586,7 +1588,8 @@ function loadExercises() {
       </div>
       <div class="sets-container" id="sets-${id}">${defaultSets}</div>
     </div>`;
-  }).join('');
+  }).join('') + `<div id="customExercisesList"></div>
+    <button class="btn btn-outline" onclick="addCustomExercise()" style="width:100%;margin-top:4px;">+ הוסף תרגיל אחר</button>`;
   exercises.forEach(ex => { setCounters[ex.replace(/\s/g,'_')] = 3; });
   btnEl.style.display = 'block';
 }
@@ -1614,6 +1617,33 @@ function renderSet(ex, num) {
 }
 
 let setCounters = {};
+let customExercises = [];
+let customExCounter = 0;
+
+function addCustomExercise() {
+  customExCounter++;
+  const id = 'custom_' + customExCounter;
+  customExercises.push(id);
+  setCounters[id] = 3;
+
+  const setOptions = [1,2,3,4,5,6].map(n => `<option value="${n}"${n===3?' selected':''}>${n} סטים</option>`).join('');
+  const defaultSets = [1,2,3].map(n => renderSet(id, n)).join('');
+
+  const card = document.createElement('div');
+  card.className = 'card exercise-item';
+  card.id = 'ex-' + id;
+  card.innerHTML = `
+    <div style="margin-bottom:8px;">
+      <input type="text" class="form-input" id="name-${id}" placeholder="שם התרגיל..." style="font-weight:700;" />
+    </div>
+    <div class="set-count-row">
+      <span style="font-size:12px;color:var(--text-light);font-weight:600;">מספר סטים:</span>
+      <select class="set-count-select" onchange="setSetCount('${id}','${id}',this.value)">${setOptions}</select>
+    </div>
+    <div class="sets-container" id="sets-${id}">${defaultSets}</div>`;
+  document.getElementById('customExercisesList').appendChild(card);
+}
+
 function addSet(id, name) {
   setCounters[id] = (setCounters[id] || 1) + 1;
   const container = document.getElementById('sets-' + id);
@@ -1639,6 +1669,19 @@ function saveWorkout() {
     return { name: ex, sets };
   }).filter(e => e.sets.some(s => s.weight > 0 || s.reps > 0));
 
+  customExercises.forEach(id => {
+    const name = document.getElementById('name-' + id)?.value.trim();
+    if (!name) return;
+    const count = setCounters[id] || 1;
+    const sets = [];
+    for (let i = 1; i <= count; i++) {
+      const w = document.getElementById('weight-' + id + '-' + i)?.value;
+      const r = document.getElementById('reps-' + id + '-' + i)?.value;
+      if (w || r) sets.push({ weight: parseFloat(w) || 0, reps: parseInt(r) || 0 });
+    }
+    if (sets.some(s => s.weight > 0 || s.reps > 0)) exercises.push({ name, sets });
+  });
+
   if (!exercises.length) { showToast('הכנס לפחות תרגיל אחד', 'error'); return; }
 
   const workouts = getData('workouts');
@@ -1650,6 +1693,8 @@ function saveWorkout() {
   document.getElementById('exercisesList').innerHTML = '';
   document.getElementById('saveWorkoutBtn').style.display = 'none';
   setCounters = {};
+  customExercises = [];
+  customExCounter = 0;
   showToast('✅ אימון נשמר!', 'success');
 }
 
